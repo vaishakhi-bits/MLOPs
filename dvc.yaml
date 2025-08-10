@@ -1,0 +1,71 @@
+stages:
+  preprocess_housing:
+    cmd: python -m src.data.preprocessing preprocess_housing_data data/raw/housing.csv data/processed/housing_preprocessed.csv
+    deps:
+      - src/data/preprocessing.py
+      - data/raw/housing.csv
+    outs:
+      - data/processed/housing_preprocessed.csv:
+          persist: true
+    metrics:
+      - data/processed/housing_preprocessed.csv:
+          cache: false
+
+  preprocess_iris:
+    cmd: python -m src.data.preprocessing preprocess_iris_data data/raw/iris.csv data/processed/iris_preprocessed.csv
+    deps:
+      - src/data/preprocessing.py
+      - data/raw/iris.csv
+    outs:
+      - data/processed/iris_preprocessed.csv:
+          persist: true
+    metrics:
+      - data/processed/iris_preprocessed.csv:
+          cache: false
+
+  train_housing:
+    cmd: python -m src.models.train --model housing --housing-data data/processed/housing_preprocessed.csv
+    deps:
+      - src/models/train.py
+      - src/models/train_housing.py
+      - data/processed/housing_preprocessed.csv
+    outs:
+      - src/models/saved/housing_model.pkl:
+          persist: true
+      - artifacts/experiments/:
+          persist: true
+    metrics:
+      - artifacts/experiments/model_comparison.csv:
+          cache: false
+
+  train_iris:
+    cmd: python -m src.models.train --model iris --iris-data data/processed/iris_preprocessed.csv
+    deps:
+      - src/models/train.py
+      - src/models/train_iris.py
+      - data/processed/iris_preprocessed.csv
+    outs:
+      - src/models/saved/iris_model.pkl:
+          persist: true
+      - artifacts/experiments/:
+          persist: true
+    metrics:
+      - artifacts/experiments/iris_model_comparison.csv:
+          cache: false
+
+  train_all:
+    cmd: python -m src.models.train --model all
+    deps:
+      - src/models/train.py
+      - src/models/train_housing.py
+      - src/models/train_iris.py
+      - data/processed/housing_preprocessed.csv
+      - data/processed/iris_preprocessed.csv
+    outs:
+      - src/models/saved/:
+          persist: true
+      - artifacts/experiments/:
+          persist: true
+    metrics:
+      - artifacts/experiments/:
+          cache: false

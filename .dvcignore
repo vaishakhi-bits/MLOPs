@@ -1,0 +1,55 @@
+# DVC ignore patterns for better performance
+# Learn more at https://dvc.org/doc/user-guide/dvcignore
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+env/
+.venv/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+temp/
+
+# Test artifacts
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
+# MLflow artifacts (tracked separately)
+mlruns/
+
+# Large model files (tracked separately)
+*.pkl
+*.joblib
+*.h5
+*.hdf5
+*.onnx
+*.pb
+
+# Artifacts directory (tracked separately)
+artifacts/

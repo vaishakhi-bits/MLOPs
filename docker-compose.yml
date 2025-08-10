@@ -1,0 +1,16 @@
+# version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+      - ./mlruns:/app/mlruns  # For MLflow tracking
+    environment:
+      - PYTHONPATH=/app
+      - MLFLOW_TRACKING_URI=file:///app/mlruns
+    working_dir: /app
+    tty: true  # Keeps the container running in detached mode
+    stdin_open: true  # Keeps the container running in detached mode

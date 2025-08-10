@@ -1,0 +1,337 @@
+name: Tests
+
+on:
+  push:
+    branches: [ main, develop, feature/* ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:  # Allow manual triggering
+
+env:
+  PYTHON_VERSION: '3.9'
+  PIP_CACHE_DIR: ~/.cache/pip
+
+jobs:
+  # Quick Tests Job (runs on PRs and feature branches)
+  quick-tests:
+    name: Quick Tests
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' || startsWith(github.ref, 'refs/heads/feature/')
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python ${{ env.PYTHON_VERSION }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ${{ env.PIP_CACHE_DIR }}
+        key: ${{ runner.os }}-pip-${{ env.PYTHON_VERSION }}-${{ hashFiles('**/requirements*.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-${{ env.PYTHON_VERSION }}-
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r requirements-dev.txt
+
+    - name: Run fast tests
+      run: |
+        python run_tests.py --fast
+
+    - name: Run unit tests
+      run: |
+        python run_tests.py --type unit
+
+    - name: Run schema tests
+      run: |
+        python run_tests.py --type schema
+
+    - name: Run basic coverage
+      run: |
+        python run_tests.py --coverage
+
+    - name: Upload coverage reports
+      uses: actions/upload-artifact@v3
+      with:
+        name: quick-coverage-reports
+        path: |
+          htmlcov/
+          coverage.xml
+        retention-days: 7
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        flags: quick-tests
+        name: codecov-quick
+        fail_ci_if_error: false
+
+    - name: Basic code quality check
+      run: |
+        # Check if code is properly formatted
+        black --check src/ || echo "Code formatting issues found"
+        # Check import sorting
+        isort --check-only src/ || echo "Import sorting issues found"
+
+    - name: Test Summary
+      run: |
+        echo "## Quick Test Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "Fast tests completed" >> $GITHUB_STEP_SUMMARY
+        echo "Unit tests completed" >> $GITHUB_STEP_SUMMARY
+        echo "Schema tests completed" >> $GITHUB_STEP_SUMMARY
+        echo "Coverage report generated" >> $GITHUB_STEP_SUMMARY
+        echo "Basic code quality checks completed" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "Quick tests passed!" >> $GITHUB_STEP_SUMMARY
+
+  # Comprehensive Tests Job (runs on main/develop pushes)
+  comprehensive-tests:
+    name: Comprehensive Tests
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+    strategy:
+      matrix:
+        python-version: ['3.8', '3.9', '3.10']
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ${{ env.PIP_CACHE_DIR }}
+        key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('**/requirements*.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-${{ matrix.python-version }}-
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r requirements-dev.txt
+
+    - name: Run all tests
+      run: |
+        python run_tests.py --all
+
+    - name: Run with coverage
+      run: |
+        python run_tests.py --coverage --parallel
+
+    - name: Upload test results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: test-results-${{ matrix.python-version }}
+        path: |
+          .pytest_cache/
+          test-results.xml
+          coverage.xml
+          htmlcov/
+        retention-days: 30
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        flags: comprehensive-tests
+        name: codecov-comprehensive
+        fail_ci_if_error: false
+
+  # Code Quality Job (runs on main/develop pushes)
+  code-quality:
+    name: Code Quality
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Required for SonarQube analysis
+
+    - name: Set up Python ${{ env.PYTHON_VERSION }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ${{ env.PIP_CACHE_DIR }}
+        key: ${{ runner.os }}-pip-${{ env.PYTHON_VERSION }}-${{ hashFiles('**/requirements*.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-${{ env.PYTHON_VERSION }}-
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r requirements-dev.txt
+
+    - name: Run code formatting check
+      run: |
+        black --check src/ tests/
+
+    - name: Run import sorting check
+      run: |
+        isort --check-only src/ tests/
+
+    - name: Run type checking
+      run: |
+        # Add mypy if needed in the future
+        echo "Type checking placeholder"
+
+    - name: Run security checks
+      run: |
+        # Add security scanning if needed
+        echo "Security checks placeholder"
+
+    - name: SonarQube Analysis
+      if: github.ref == 'refs/heads/main'
+      uses: sonarsource/sonarqube-quality-gate-action@master
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+  # Integration Tests Job (runs on main/develop pushes)
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+    needs: [comprehensive-tests, code-quality]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python ${{ env.PYTHON_VERSION }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ${{ env.PIP_CACHE_DIR }}
+        key: ${{ runner.os }}-pip-${{ env.PYTHON_VERSION }}-${{ hashFiles('**/requirements*.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-${{ env.PYTHON_VERSION }}-
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r requirements-dev.txt
+
+    - name: Run integration tests
+      run: |
+        python run_tests.py --type integration
+
+    - name: Run training tests
+      run: |
+        python run_tests.py --type training
+
+    - name: Upload integration test results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: integration-test-results
+        path: |
+          .pytest_cache/
+          test-results.xml
+        retention-days: 30
+
+  # Performance Tests Job (runs on main/develop pushes)
+  performance-tests:
+    name: Performance Tests
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+    needs: [comprehensive-tests, code-quality]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python ${{ env.PYTHON_VERSION }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ${{ env.PIP_CACHE_DIR }}
+        key: ${{ runner.os }}-pip-${{ env.PYTHON_VERSION }}-${{ hashFiles('**/requirements*.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-${{ env.PYTHON_VERSION }}-
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r requirements-dev.txt
+
+    - name: Run performance tests
+      run: |
+        python run_tests.py --type performance
+
+    - name: Upload performance test results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: performance-test-results
+        path: |
+          .pytest_cache/
+          test-results.xml
+        retention-days: 30
+
+  # Final Summary Job
+  summary:
+    name: Test Summary
+    runs-on: ubuntu-latest
+    needs: [quick-tests, comprehensive-tests, code-quality, integration-tests, performance-tests]
+    if: always()
+    
+    steps:
+    - name: Generate Summary
+      run: |
+        echo "## Test Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+          echo "### Quick Tests (PR)" >> $GITHUB_STEP_SUMMARY
+          echo "- Fast tests" >> $GITHUB_STEP_SUMMARY
+          echo "- Unit tests" >> $GITHUB_STEP_SUMMARY
+          echo "- Schema tests" >> $GITHUB_STEP_SUMMARY
+          echo "- Basic coverage" >> $GITHUB_STEP_SUMMARY
+          echo "- Code quality checks" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "### Comprehensive Tests (Main/Develop)" >> $GITHUB_STEP_SUMMARY
+          echo "- Multi-Python version tests" >> $GITHUB_STEP_SUMMARY
+          echo "- Full test suite" >> $GITHUB_STEP_SUMMARY
+          echo "- Integration tests" >> $GITHUB_STEP_SUMMARY
+          echo "- Performance tests" >> $GITHUB_STEP_SUMMARY
+          echo "- Code quality checks" >> $GITHUB_STEP_SUMMARY
+          echo "- Coverage reporting" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "All tests completed!" >> $GITHUB_STEP_SUMMARY 
