@@ -159,7 +159,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     logger.warning(f"Validation error for request {request_id}: {error_details}")
 
     return JSONResponse(
-        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, content=error_response.dict()
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, content=error_response.model_dump()
     )
 
 
@@ -179,7 +179,7 @@ async def general_exception_handler(request: Request, exc: Exception):
     logger.error(f"Unhandled exception for request {request_id}: {str(exc)}")
 
     return JSONResponse(
-        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content=error_response.dict()
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content=error_response.model_dump()
     )
 
 
@@ -521,7 +521,7 @@ def predict_housing(features: HousingFeatures, request: Request):
     user_agent = request.headers.get("user-agent")
 
     # Log incoming request
-    input_features = features.dict()
+    input_features = features.model_dump()
     prediction_logger.log_request(
         "housing", request_id, input_features, client_ip, user_agent
     )
@@ -539,7 +539,7 @@ def predict_housing(features: HousingFeatures, request: Request):
 
     try:
         # Convert input features to a dictionary and then to DataFrame
-        input_data = features.dict()
+        input_data = features.model_dump()
 
         logger.info(f"Request {request_id}: Input features received: {input_data}")
 
@@ -694,7 +694,7 @@ def predict_iris(features: IrisFeatures, request: Request):
     user_agent = request.headers.get("user-agent")
 
     # Log incoming request
-    input_features = features.dict()
+    input_features = features.model_dump()
     prediction_logger.log_request(
         "iris", request_id, input_features, client_ip, user_agent
     )

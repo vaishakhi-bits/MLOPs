@@ -30,6 +30,9 @@ pytest-cov>=2.12.1
 # Code formatting
 black>=22.0.0
 
+# HTTP client for FastAPI testing
+httpx>=0.24.0
+
 # Utilities
 joblib>=1.1.0
 pyyaml>=5.4.1

@@ -10,3 +10,6 @@ isort>=5.10.1
 
 # ML dependencies (needed for tests)
 scikit-learn>=1.0.0
+
+# HTTP client for FastAPI testing
+httpx>=0.24.0

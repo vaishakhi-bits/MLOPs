@@ -100,7 +100,8 @@ def check_dependencies():
         "fastapi": "fastapi",
         "numpy": "numpy",
         "pandas": "pandas",
-        "scikit-learn": "sklearn"
+        "scikit-learn": "sklearn",
+        "httpx": "httpx"
     }
     
     missing_packages = []
