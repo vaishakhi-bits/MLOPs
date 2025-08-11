@@ -159,7 +159,8 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     logger.warning(f"Validation error for request {request_id}: {error_details}")
 
     return JSONResponse(
-        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, content=error_response.model_dump()
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        content=error_response.model_dump(),
     )
 
 
@@ -179,7 +180,8 @@ async def general_exception_handler(request: Request, exc: Exception):
     logger.error(f"Unhandled exception for request {request_id}: {str(exc)}")
 
     return JSONResponse(
-        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content=error_response.model_dump()
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        content=error_response.model_dump(),
     )
 
 
@@ -335,6 +337,7 @@ prediction_logger.log_model_status(
 )
 
 housing_model = None
+feature_scaler = None  # Initialize feature_scaler to None
 
 # Try to load the model from the specified path
 try:
@@ -406,6 +409,7 @@ except Exception as e:
     logger.error(error_msg)
     prediction_logger.log_model_status("housing", "error", error_msg)
     housing_model = None
+    feature_scaler = None  # Ensure feature_scaler is None if loading fails
 
 # Define allowed categories for one-hot encoding (used in housing prediction)
 OCEAN_CATEGORIES = ["<1H OCEAN", "INLAND", "ISLAND", "NEAR BAY", "NEAR OCEAN"]
