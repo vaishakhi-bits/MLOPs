@@ -2,7 +2,11 @@
 pytest>=7.0.0
 pytest-cov>=3.0.0
 pytest-xdist>=2.5.0
+pytest-timeout>=2.0.0
 
 # Code quality
 black>=22.3.0
 isort>=5.10.1
+
+# ML dependencies (needed for tests)
+scikit-learn>=1.0.0
