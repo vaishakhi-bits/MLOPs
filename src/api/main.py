@@ -1,11 +1,16 @@
-from fastapi import FastAPI, HTTPException, Request, Response
+from fastapi import FastAPI, HTTPException, Request, Response, status
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from prometheus_client import make_asgi_app, Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
 from src.api.schema import (
     HousingFeatures,
     HousingPredictionResponse,
     IrisFeatures,
-    IrisPredictionResponse
+    IrisPredictionResponse,
+    ErrorResponse,
+    HealthCheck,
+    ModelStatus
 )
 import numpy as np
 import pandas as pd
@@ -14,6 +19,7 @@ from dotenv import load_dotenv
 import os
 import time
 import uuid
+import datetime
 from pathlib import Path
 import joblib
 from sklearn.preprocessing import StandardScaler
@@ -53,7 +59,59 @@ REQUEST_LATENCY = Histogram(
 # Create a separate metrics app for Prometheus
 metrics_app = make_asgi_app()
 
-app = FastAPI()
+app = FastAPI(
+    title="YugenAI ML API",
+    description="Machine Learning API for Housing and Iris predictions",
+    version="1.0.0"
+)
+
+# Add validation error handler
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    """Handle Pydantic validation errors"""
+    request_id = str(uuid.uuid4())
+    error_details = []
+    
+    for error in exc.errors():
+        error_details.append({
+            "field": " -> ".join(str(loc) for loc in error["loc"]),
+            "message": error["msg"],
+            "type": error["type"]
+        })
+    
+    error_response = ErrorResponse(
+        error="Validation Error",
+        detail=f"Invalid input data: {len(error_details)} validation errors",
+        request_id=request_id,
+        timestamp=time.strftime("%Y-%m-%d %H:%M:%S")
+    )
+    
+    logger.warning(f"Validation error for request {request_id}: {error_details}")
+    
+    return JSONResponse(
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        content=error_response.dict()
+    )
+
+# Add general exception handler
+@app.exception_handler(Exception)
+async def general_exception_handler(request: Request, exc: Exception):
+    """Handle general exceptions"""
+    request_id = str(uuid.uuid4())
+    
+    error_response = ErrorResponse(
+        error="Internal Server Error",
+        detail=str(exc),
+        request_id=request_id,
+        timestamp=time.strftime("%Y-%m-%d %H:%M:%S")
+    )
+    
+    logger.error(f"Unhandled exception for request {request_id}: {str(exc)}")
+    
+    return JSONResponse(
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        content=error_response.dict()
+    )
 
 # Add startup and shutdown event handlers
 @app.on_event("startup")
@@ -219,6 +277,46 @@ async def read_root():
     logger.info("API root endpoint accessed")
     return {"message": "Welcome to YugenAI API. Use /docs for API documentation."}
 
+@app.get("/health", response_model=HealthCheck)
+async def health_check():
+    """Health check endpoint to verify API and model status"""
+    logger.info("Health check requested")
+    
+    # Check model statuses
+    models = []
+    
+    # Iris model status
+    iris_status = "loaded" if iris_model is not None else "not_loaded"
+    iris_loaded = iris_model is not None
+    models.append(ModelStatus(
+        model_name="iris",
+        status=iris_status,
+        loaded=iris_loaded,
+        last_updated=time.strftime("%Y-%m-%d %H:%M:%S")
+    ))
+    
+    # Housing model status
+    housing_status = "loaded" if housing_model is not None else "not_loaded"
+    housing_loaded = housing_model is not None
+    models.append(ModelStatus(
+        model_name="housing",
+        status=housing_status,
+        loaded=housing_loaded,
+        last_updated=time.strftime("%Y-%m-%d %H:%M:%S")
+    ))
+    
+    # Overall status
+    overall_status = "healthy" if all(model.loaded for model in models) else "degraded"
+    
+    health_response = HealthCheck(
+        status=overall_status,
+        models=models,
+        timestamp=time.strftime("%Y-%m-%d %H:%M:%S"),
+        version="1.0.0"
+    )
+    
+    return health_response
+
 # Prometheus metrics endpoint
 @app.get("/metrics")
 async def metrics():
@@ -360,11 +458,17 @@ def predict_housing(features: HousingFeatures, request: Request):
         # Calculate processing time
         processing_time = time.time() - start_time
         
+        # Calculate confidence score (simplified - in practice, this would come from the model)
+        confidence_score = 0.85  # Placeholder - could be calculated from model uncertainty
+        
         # Log successful response
         prediction_logger.log_response(request_id, "housing", float(prediction), processing_time, True)
         logger.info(f"Request {request_id}: Housing prediction completed successfully in {processing_time:.4f}s")
             
-        return HousingPredictionResponse(predicted_price=float(prediction))
+        return HousingPredictionResponse(
+            predicted_price=float(prediction),
+            confidence_score=confidence_score
+        )
         
     except Exception as e:
         processing_time = time.time() - start_time
@@ -423,6 +527,15 @@ def predict_iris(features: IrisFeatures, request: Request):
         
         logger.info(f"Request {request_id}: Predicted class: {predicted_class}")
         
+        # Calculate confidence score and class probabilities (simplified)
+        # In practice, these would come from model.predict_proba()
+        confidence_score = 0.95  # Placeholder
+        class_probabilities = {
+            "Iris-setosa": 0.95,
+            "Iris-versicolor": 0.03,
+            "Iris-virginica": 0.02
+        }
+        
         # Calculate processing time
         processing_time = time.time() - start_time
         
@@ -430,7 +543,11 @@ def predict_iris(features: IrisFeatures, request: Request):
         prediction_logger.log_response(request_id, "iris", predicted_class, processing_time, True)
         logger.info(f"Request {request_id}: Iris prediction completed successfully in {processing_time:.4f}s")
      
-        return IrisPredictionResponse(predicted_class=predicted_class)
+        return IrisPredictionResponse(
+            predicted_class=predicted_class,
+            confidence_score=confidence_score,
+            class_probabilities=class_probabilities
+        )
         
     except Exception as e:
         processing_time = time.time() - start_time

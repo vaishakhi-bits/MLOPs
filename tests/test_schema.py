@@ -1,6 +1,14 @@
 import pytest
 from pydantic import ValidationError
-from src.api.schema import IrisFeatures, HousingFeatures, IrisPredictionResponse, HousingPredictionResponse
+from src.api.schema import (
+    IrisFeatures, 
+    HousingFeatures, 
+    IrisPredictionResponse, 
+    HousingPredictionResponse,
+    ModelStatus,
+    HealthCheck,
+    ErrorResponse
+)
 
 class TestIrisFeatures:
     """Test IrisFeatures schema validation"""
@@ -70,49 +78,79 @@ class TestIrisFeatures:
         assert "SepalLengthCm" in errors[0]["loc"]
     
     def test_iris_features_negative_values(self):
-        """Test Iris features with negative values (should be valid)"""
-        valid_data = {
+        """Test Iris features with negative values (should fail validation)"""
+        invalid_data = {
             "SepalLengthCm": -1.0,
             "SepalWidthCm": -2.0,
             "PetalLengthCm": -3.0,
             "PetalWidthCm": -4.0
         }
         
-        iris_features = IrisFeatures(**valid_data)
-        assert iris_features.SepalLengthCm == -1.0
-        assert iris_features.SepalWidthCm == -2.0
-        assert iris_features.PetalLengthCm == -3.0
-        assert iris_features.PetalWidthCm == -4.0
+        with pytest.raises(ValidationError) as exc_info:
+            IrisFeatures(**invalid_data)
+        
+        errors = exc_info.value.errors()
+        assert len(errors) >= 1  # At least one validation error
     
     def test_iris_features_zero_values(self):
-        """Test Iris features with zero values"""
-        valid_data = {
+        """Test Iris features with zero values (should fail validation)"""
+        invalid_data = {
             "SepalLengthCm": 0.0,
             "SepalWidthCm": 0.0,
             "PetalLengthCm": 0.0,
             "PetalWidthCm": 0.0
         }
         
-        iris_features = IrisFeatures(**valid_data)
-        assert iris_features.SepalLengthCm == 0.0
-        assert iris_features.SepalWidthCm == 0.0
-        assert iris_features.PetalLengthCm == 0.0
-        assert iris_features.PetalWidthCm == 0.0
+        with pytest.raises(ValidationError) as exc_info:
+            IrisFeatures(**invalid_data)
+        
+        errors = exc_info.value.errors()
+        assert len(errors) >= 1  # At least one validation error
     
-    def test_iris_features_large_values(self):
-        """Test Iris features with large values"""
-        valid_data = {
-            "SepalLengthCm": 1000.0,
-            "SepalWidthCm": 1000.0,
-            "PetalLengthCm": 1000.0,
-            "PetalWidthCm": 1000.0
+    def test_iris_features_out_of_range_values(self):
+        """Test Iris features with values outside allowed ranges"""
+        invalid_data = {
+            "SepalLengthCm": 25.0,  # > 20.0
+            "SepalWidthCm": 3.5,
+            "PetalLengthCm": 1.4,
+            "PetalWidthCm": 0.2
         }
         
-        iris_features = IrisFeatures(**valid_data)
-        assert iris_features.SepalLengthCm == 1000.0
-        assert iris_features.SepalWidthCm == 1000.0
-        assert iris_features.PetalLengthCm == 1000.0
-        assert iris_features.PetalWidthCm == 1000.0
+        with pytest.raises(ValidationError) as exc_info:
+            IrisFeatures(**invalid_data)
+        
+        errors = exc_info.value.errors()
+        assert len(errors) >= 1
+    
+    def test_iris_features_sepal_length_less_than_width(self):
+        """Test validation when sepal length is less than width"""
+        invalid_data = {
+            "SepalLengthCm": 3.0,  # Less than width
+            "SepalWidthCm": 4.0,
+            "PetalLengthCm": 1.4,
+            "PetalWidthCm": 0.2
+        }
+        
+        with pytest.raises(ValidationError) as exc_info:
+            IrisFeatures(**invalid_data)
+        
+        errors = exc_info.value.errors()
+        assert len(errors) >= 1
+    
+    def test_iris_features_petal_length_less_than_width(self):
+        """Test validation when petal length is less than width"""
+        invalid_data = {
+            "SepalLengthCm": 5.1,
+            "SepalWidthCm": 3.5,
+            "PetalLengthCm": 0.1,  # Less than width
+            "PetalWidthCm": 0.5
+        }
+        
+        with pytest.raises(ValidationError) as exc_info:
+            IrisFeatures(**invalid_data)
+        
+        errors = exc_info.value.errors()
+        assert len(errors) >= 1
 
 class TestHousingFeatures:
     """Test HousingFeatures schema validation"""
@@ -250,7 +288,7 @@ class TestHousingFeatures:
         
         errors = exc_info.value.errors()
         assert len(errors) == 1
-        assert errors[0]["type"] == "enum"
+        assert errors[0]["type"] == "literal_error"
         assert "ocean_proximity" in errors[0]["loc"]
     
     def test_housing_features_case_sensitive_ocean_proximity(self):
@@ -272,58 +310,108 @@ class TestHousingFeatures:
         
         errors = exc_info.value.errors()
         assert len(errors) == 1
-        assert errors[0]["type"] == "enum"
+        assert errors[0]["type"] == "literal_error"
         assert "ocean_proximity" in errors[0]["loc"]
     
-    def test_housing_features_extreme_values(self):
-        """Test Housing features with extreme values"""
-        valid_data = {
-            "longitude": -180.0,  # Minimum longitude
-            "latitude": -90.0,    # Minimum latitude
-            "housing_median_age": 0.0,
-            "total_rooms": 0.0,
-            "total_bedrooms": 0.0,
-            "population": 0.0,
-            "households": 0.0,
-            "median_income": 0.0,
-            "ocean_proximity": "INLAND"
+    def test_housing_features_out_of_range_values(self):
+        """Test Housing features with values outside allowed ranges"""
+        invalid_data = {
+            "longitude": 200.0,  # > 180.0
+            "latitude": 37.88,
+            "housing_median_age": 41.0,
+            "total_rooms": 880.0,
+            "total_bedrooms": 129.0,
+            "population": 322.0,
+            "households": 126.0,
+            "median_income": 8.3252,
+            "ocean_proximity": "NEAR BAY"
         }
         
-        housing_features = HousingFeatures(**valid_data)
-        assert housing_features.longitude == -180.0
-        assert housing_features.latitude == -90.0
-        assert housing_features.housing_median_age == 0.0
-        assert housing_features.total_rooms == 0.0
-        assert housing_features.total_bedrooms == 0.0
-        assert housing_features.population == 0.0
-        assert housing_features.households == 0.0
-        assert housing_features.median_income == 0.0
-        assert housing_features.ocean_proximity == "INLAND"
+        with pytest.raises(ValidationError) as exc_info:
+            HousingFeatures(**invalid_data)
+        
+        errors = exc_info.value.errors()
+        assert len(errors) >= 1
     
-    def test_housing_features_very_large_values(self):
-        """Test Housing features with very large values"""
-        valid_data = {
-            "longitude": 180.0,   # Maximum longitude
-            "latitude": 90.0,     # Maximum latitude
-            "housing_median_age": 999999.0,
-            "total_rooms": 999999.0,
-            "total_bedrooms": 999999.0,
-            "population": 999999.0,
-            "households": 999999.0,
-            "median_income": 999999.0,
-            "ocean_proximity": "NEAR OCEAN"
+    def test_housing_features_bedrooms_exceed_rooms(self):
+        """Test validation when bedrooms exceed total rooms"""
+        invalid_data = {
+            "longitude": -122.23,
+            "latitude": 37.88,
+            "housing_median_age": 41.0,
+            "total_rooms": 10.0,
+            "total_bedrooms": 15.0,  # More bedrooms than rooms
+            "population": 322.0,
+            "households": 126.0,
+            "median_income": 8.3252,
+            "ocean_proximity": "NEAR BAY"
         }
         
-        housing_features = HousingFeatures(**valid_data)
-        assert housing_features.longitude == 180.0
-        assert housing_features.latitude == 90.0
-        assert housing_features.housing_median_age == 999999.0
-        assert housing_features.total_rooms == 999999.0
-        assert housing_features.total_bedrooms == 999999.0
-        assert housing_features.population == 999999.0
-        assert housing_features.households == 999999.0
-        assert housing_features.median_income == 999999.0
-        assert housing_features.ocean_proximity == "NEAR OCEAN"
+        with pytest.raises(ValidationError) as exc_info:
+            HousingFeatures(**invalid_data)
+        
+        errors = exc_info.value.errors()
+        assert len(errors) >= 1
+    
+    def test_housing_features_households_exceed_population(self):
+        """Test validation when households exceed population"""
+        invalid_data = {
+            "longitude": -122.23,
+            "latitude": 37.88,
+            "housing_median_age": 41.0,
+            "total_rooms": 880.0,
+            "total_bedrooms": 129.0,
+            "population": 100.0,
+            "households": 150.0,  # More households than population
+            "median_income": 8.3252,
+            "ocean_proximity": "NEAR BAY"
+        }
+        
+        with pytest.raises(ValidationError) as exc_info:
+            HousingFeatures(**invalid_data)
+        
+        errors = exc_info.value.errors()
+        assert len(errors) >= 1
+    
+    def test_housing_features_high_median_income(self):
+        """Test validation for unusually high median income"""
+        invalid_data = {
+            "longitude": -122.23,
+            "latitude": 37.88,
+            "housing_median_age": 41.0,
+            "total_rooms": 880.0,
+            "total_bedrooms": 129.0,
+            "population": 322.0,
+            "households": 126.0,
+            "median_income": 25.0,  # > 20.0
+            "ocean_proximity": "NEAR BAY"
+        }
+        
+        with pytest.raises(ValidationError) as exc_info:
+            HousingFeatures(**invalid_data)
+        
+        errors = exc_info.value.errors()
+        assert len(errors) >= 1
+    
+    def test_housing_features_outside_california_bounds(self):
+        """Test validation for coordinates outside California"""
+        invalid_data = {
+            "longitude": -100.0,  # Outside California bounds
+            "latitude": 37.88,
+            "housing_median_age": 41.0,
+            "total_rooms": 880.0,
+            "total_bedrooms": 129.0,
+            "population": 322.0,
+            "households": 126.0,
+            "median_income": 8.3252,
+            "ocean_proximity": "NEAR BAY"
+        }
+        
+        with pytest.raises(ValidationError) as exc_info:
+            HousingFeatures(**invalid_data)
+        
+        errors = exc_info.value.errors()
+        assert len(errors) >= 1
 
 class TestIrisPredictionResponse:
     """Test IrisPredictionResponse schema validation"""
@@ -336,10 +424,45 @@ class TestIrisPredictionResponse:
         
         response = IrisPredictionResponse(**valid_data)
         assert response.predicted_class == "Iris-setosa"
+        assert response.confidence_score is None
+        assert response.class_probabilities is None
+    
+    def test_iris_prediction_response_with_confidence(self):
+        """Test Iris prediction response with confidence score"""
+        valid_data = {
+            "predicted_class": "Iris-setosa",
+            "confidence_score": 0.95
+        }
+        
+        response = IrisPredictionResponse(**valid_data)
+        assert response.predicted_class == "Iris-setosa"
+        assert response.confidence_score == 0.95
+        assert response.class_probabilities is None
+    
+    def test_iris_prediction_response_with_probabilities(self):
+        """Test Iris prediction response with class probabilities"""
+        valid_data = {
+            "predicted_class": "Iris-setosa",
+            "confidence_score": 0.95,
+            "class_probabilities": {
+                "Iris-setosa": 0.95,
+                "Iris-versicolor": 0.03,
+                "Iris-virginica": 0.02
+            }
+        }
+        
+        response = IrisPredictionResponse(**valid_data)
+        assert response.predicted_class == "Iris-setosa"
+        assert response.confidence_score == 0.95
+        assert response.class_probabilities == {
+            "Iris-setosa": 0.95,
+            "Iris-versicolor": 0.03,
+            "Iris-virginica": 0.02
+        }
     
     def test_iris_prediction_response_all_classes(self):
         """Test Iris prediction response with all possible classes"""
-        valid_classes = ["Iris-setosa", "Iris-versicolor", "Iris-virginica"]
+        valid_classes = ["Iris-setosa", "Iris-versicolor", "Iris-virginica", "Unknown"]
         
         for predicted_class in valid_classes:
             valid_data = {
@@ -361,14 +484,47 @@ class TestIrisPredictionResponse:
         assert errors[0]["type"] == "missing"
         assert "predicted_class" in errors[0]["loc"]
     
-    def test_iris_prediction_response_empty_string(self):
-        """Test Iris prediction response with empty string"""
-        valid_data = {
-            "predicted_class": ""
+    def test_iris_prediction_response_invalid_class(self):
+        """Test Iris prediction response with invalid class"""
+        invalid_data = {
+            "predicted_class": "Invalid-Class"
         }
         
-        response = IrisPredictionResponse(**valid_data)
-        assert response.predicted_class == ""
+        with pytest.raises(ValidationError) as exc_info:
+            IrisPredictionResponse(**invalid_data)
+        
+        errors = exc_info.value.errors()
+        assert len(errors) >= 1
+    
+    def test_iris_prediction_response_invalid_confidence_score(self):
+        """Test Iris prediction response with invalid confidence score"""
+        invalid_data = {
+            "predicted_class": "Iris-setosa",
+            "confidence_score": 1.5  # > 1.0
+        }
+        
+        with pytest.raises(ValidationError) as exc_info:
+            IrisPredictionResponse(**invalid_data)
+        
+        errors = exc_info.value.errors()
+        assert len(errors) >= 1
+    
+    def test_iris_prediction_response_invalid_probabilities(self):
+        """Test Iris prediction response with invalid probabilities"""
+        invalid_data = {
+            "predicted_class": "Iris-setosa",
+            "class_probabilities": {
+                "Iris-setosa": 0.5,
+                "Iris-versicolor": 0.3,
+                "Iris-virginica": 0.1  # Sum < 1.0
+            }
+        }
+        
+        with pytest.raises(ValidationError) as exc_info:
+            IrisPredictionResponse(**invalid_data)
+        
+        errors = exc_info.value.errors()
+        assert len(errors) >= 1
 
 class TestHousingPredictionResponse:
     """Test HousingPredictionResponse schema validation"""
@@ -381,6 +537,18 @@ class TestHousingPredictionResponse:
         
         response = HousingPredictionResponse(**valid_data)
         assert response.predicted_price == 250000.0
+        assert response.confidence_score is None
+    
+    def test_housing_prediction_response_with_confidence(self):
+        """Test Housing prediction response with confidence score"""
+        valid_data = {
+            "predicted_price": 250000.0,
+            "confidence_score": 0.85
+        }
+        
+        response = HousingPredictionResponse(**valid_data)
+        assert response.predicted_price == 250000.0
+        assert response.confidence_score == 0.85
     
     def test_housing_prediction_response_with_string(self):
         """Test Housing prediction response with string representation of float"""
@@ -401,13 +569,16 @@ class TestHousingPredictionResponse:
         assert response.predicted_price == 0.0
     
     def test_housing_prediction_response_negative_price(self):
-        """Test Housing prediction response with negative price"""
-        valid_data = {
+        """Test Housing prediction response with negative price (should fail)"""
+        invalid_data = {
             "predicted_price": -1000.0
         }
         
-        response = HousingPredictionResponse(**valid_data)
-        assert response.predicted_price == -1000.0
+        with pytest.raises(ValidationError) as exc_info:
+            HousingPredictionResponse(**invalid_data)
+        
+        errors = exc_info.value.errors()
+        assert len(errors) >= 1
     
     def test_housing_prediction_response_very_large_price(self):
         """Test Housing prediction response with very large price"""
@@ -443,6 +614,113 @@ class TestHousingPredictionResponse:
         assert len(errors) == 1
         assert errors[0]["type"] == "float_parsing"
         assert "predicted_price" in errors[0]["loc"]
+    
+    def test_housing_prediction_response_invalid_confidence_score(self):
+        """Test Housing prediction response with invalid confidence score"""
+        invalid_data = {
+            "predicted_price": 250000.0,
+            "confidence_score": -0.1  # < 0.0
+        }
+        
+        with pytest.raises(ValidationError) as exc_info:
+            HousingPredictionResponse(**invalid_data)
+        
+        errors = exc_info.value.errors()
+        assert len(errors) >= 1
+
+class TestModelStatus:
+    """Test ModelStatus schema validation"""
+    
+    def test_valid_model_status(self):
+        """Test valid ModelStatus"""
+        valid_data = {
+            "model_name": "iris",
+            "status": "loaded",
+            "loaded": True,
+            "last_updated": "2024-01-01 12:00:00"
+        }
+        
+        model_status = ModelStatus(**valid_data)
+        assert model_status.model_name == "iris"
+        assert model_status.status == "loaded"
+        assert model_status.loaded is True
+        assert model_status.last_updated == "2024-01-01 12:00:00"
+    
+    def test_model_status_without_last_updated(self):
+        """Test ModelStatus without last_updated field"""
+        valid_data = {
+            "model_name": "housing",
+            "status": "not_loaded",
+            "loaded": False
+        }
+        
+        model_status = ModelStatus(**valid_data)
+        assert model_status.model_name == "housing"
+        assert model_status.status == "not_loaded"
+        assert model_status.loaded is False
+        assert model_status.last_updated is None
+
+class TestHealthCheck:
+    """Test HealthCheck schema validation"""
+    
+    def test_valid_health_check(self):
+        """Test valid HealthCheck"""
+        valid_data = {
+            "status": "healthy",
+            "models": [
+                {
+                    "model_name": "iris",
+                    "status": "loaded",
+                    "loaded": True,
+                    "last_updated": "2024-01-01 12:00:00"
+                },
+                {
+                    "model_name": "housing",
+                    "status": "loaded",
+                    "loaded": True,
+                    "last_updated": "2024-01-01 12:00:00"
+                }
+            ],
+            "timestamp": "2024-01-01 12:00:00",
+            "version": "1.0.0"
+        }
+        
+        health_check = HealthCheck(**valid_data)
+        assert health_check.status == "healthy"
+        assert len(health_check.models) == 2
+        assert health_check.timestamp == "2024-01-01 12:00:00"
+        assert health_check.version == "1.0.0"
+
+class TestErrorResponse:
+    """Test ErrorResponse schema validation"""
+    
+    def test_valid_error_response(self):
+        """Test valid ErrorResponse"""
+        valid_data = {
+            "error": "Validation Error",
+            "detail": "Invalid input data",
+            "request_id": "12345",
+            "timestamp": "2024-01-01 12:00:00"
+        }
+        
+        error_response = ErrorResponse(**valid_data)
+        assert error_response.error == "Validation Error"
+        assert error_response.detail == "Invalid input data"
+        assert error_response.request_id == "12345"
+        assert error_response.timestamp == "2024-01-01 12:00:00"
+    
+    def test_error_response_without_optional_fields(self):
+        """Test ErrorResponse without optional fields"""
+        valid_data = {
+            "error": "Internal Server Error",
+            "timestamp": "2024-01-01 12:00:00"
+        }
+        
+        error_response = ErrorResponse(**valid_data)
+        assert error_response.error == "Internal Server Error"
+        assert error_response.detail is None
+        assert error_response.request_id is None
+        assert error_response.timestamp == "2024-01-01 12:00:00"
 
 class TestSchemaSerialization:
     """Test schema serialization and deserialization"""
@@ -456,7 +734,7 @@ class TestSchemaSerialization:
             PetalWidthCm=0.2
         )
         
-        data = iris_features.dict()
+        data = iris_features.model_dump()
         assert data["SepalLengthCm"] == 5.1
         assert data["SepalWidthCm"] == 3.5
         assert data["PetalLengthCm"] == 1.4
@@ -476,7 +754,7 @@ class TestSchemaSerialization:
             ocean_proximity="NEAR BAY"
         )
         
-        data = housing_features.dict()
+        data = housing_features.model_dump()
         assert data["longitude"] == -122.23
         assert data["latitude"] == 37.88
         assert data["housing_median_age"] == 41.0
@@ -489,17 +767,35 @@ class TestSchemaSerialization:
     
     def test_iris_prediction_response_serialization(self):
         """Test IrisPredictionResponse serialization to dict"""
-        response = IrisPredictionResponse(predicted_class="Iris-setosa")
+        response = IrisPredictionResponse(
+            predicted_class="Iris-setosa",
+            confidence_score=0.95,
+            class_probabilities={
+                "Iris-setosa": 0.95,
+                "Iris-versicolor": 0.03,
+                "Iris-virginica": 0.02
+            }
+        )
         
-        data = response.dict()
+        data = response.model_dump()
         assert data["predicted_class"] == "Iris-setosa"
+        assert data["confidence_score"] == 0.95
+        assert data["class_probabilities"] == {
+            "Iris-setosa": 0.95,
+            "Iris-versicolor": 0.03,
+            "Iris-virginica": 0.02
+        }
     
     def test_housing_prediction_response_serialization(self):
         """Test HousingPredictionResponse serialization to dict"""
-        response = HousingPredictionResponse(predicted_price=250000.0)
+        response = HousingPredictionResponse(
+            predicted_price=250000.0,
+            confidence_score=0.85
+        )
         
-        data = response.dict()
+        data = response.model_dump()
         assert data["predicted_price"] == 250000.0
+        assert data["confidence_score"] == 0.85
 
 if __name__ == "__main__":
     pytest.main([__file__]) 
