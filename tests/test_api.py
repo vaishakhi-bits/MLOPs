@@ -140,7 +140,7 @@ class TestLogsEndpoint:
         )
 
         # Use a simpler approach - mock the division operation
-        def mock_division(other):
+        def mock_division(self, other):
             return mock_pred_log
 
         mock_logs_dir.__truediv__ = mock_division
@@ -346,7 +346,7 @@ class TestHousingPrediction:
                 )
                 assert response.status_code == 422  # Should be 422 for validation error
                 data = response.json()
-                assert "predicted_price" in data
+                assert "detail" in data  # Should have validation error details
                 # Should still work but with warning logged
 
     def test_predict_housing_all_ocean_proximities(self, mock_housing_model):

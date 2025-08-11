@@ -36,7 +36,7 @@ class TestLoggerSetup:
             # Mock the log file
             mock_log_file = Mock()
 
-            def mock_division(other):
+            def mock_division(self, other):
                 return mock_log_file
 
             mock_logs_dir.__truediv__ = mock_division
@@ -59,7 +59,7 @@ class TestLoggerSetup:
             # Mock the log file
             mock_log_file = Mock()
 
-            def mock_division(other):
+            def mock_division(self, other):
                 return mock_log_file
 
             mock_logs_dir.__truediv__ = mock_division
@@ -82,7 +82,7 @@ class TestLoggerSetup:
             # Mock the log file
             mock_log_file = Mock()
 
-            def mock_division(other):
+            def mock_division(self, other):
                 return mock_log_file
 
             mock_logs_dir.__truediv__ = mock_division
@@ -110,7 +110,7 @@ class TestPredictionLogger:
             # Mock the prediction log file
             mock_pred_log_file = Mock()
 
-            def mock_division(other):
+            def mock_division(self, other):
                 return mock_pred_log_file
 
             mock_logs_dir.__truediv__ = mock_division
