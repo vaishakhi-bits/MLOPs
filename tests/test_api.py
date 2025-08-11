@@ -1,6 +1,7 @@
 import json
 import shutil
 import tempfile
+import types
 from datetime import datetime
 from pathlib import Path
 from unittest.mock import MagicMock, Mock, patch
@@ -99,7 +100,8 @@ class TestLogsEndpoint:
     """Test the logs viewing endpoint"""
 
     @patch("src.api.main.Path")
-    def test_view_logs_api(self, mock_path):
+    @patch("builtins.open", create=True)
+    def test_view_logs_api(self, mock_open, mock_path):
         """Test viewing API logs"""
         # Mock logs directory and files
         mock_logs_dir = Mock()
@@ -108,15 +110,22 @@ class TestLogsEndpoint:
 
         mock_api_log = Mock()
         mock_api_log.exists.return_value = True
-        mock_api_log.read_text.return_value = (
-            "2024-01-01 10:00:00 - api - INFO - Test log\n"
-        )
 
-        # Use a simpler approach - mock the division operation
+        # Mock the division operation to handle nested paths
         def mock_division(self, other):
+            if other == "api":
+                mock_api_dir = Mock()
+                def mock_api_division(self, x):
+                    return mock_api_log
+                mock_api_dir.__truediv__ = mock_api_division
+                return mock_api_dir
             return mock_api_log
-
         mock_logs_dir.__truediv__ = mock_division
+
+        # Mock the open function to return a file-like object
+        mock_file = Mock()
+        mock_file.readlines.return_value = ["2024-01-01 10:00:00 - api - INFO - Test log\n"]
+        mock_open.return_value.__enter__.return_value = mock_file
 
         response = client.get("/logs?log_type=api&lines=5")
         assert response.status_code == 200
@@ -126,7 +135,8 @@ class TestLogsEndpoint:
         assert "logs" in data
 
     @patch("src.api.main.Path")
-    def test_view_logs_prediction(self, mock_path):
+    @patch("builtins.open", create=True)
+    def test_view_logs_prediction(self, mock_open, mock_path):
         """Test viewing prediction logs"""
         # Mock logs directory and files
         mock_logs_dir = Mock()
@@ -135,15 +145,22 @@ class TestLogsEndpoint:
 
         mock_pred_log = Mock()
         mock_pred_log.exists.return_value = True
-        mock_pred_log.read_text.return_value = (
-            '2024-01-01 10:00:00 - REQUEST: {"test": "data"}\n'
-        )
 
-        # Use a simpler approach - mock the division operation
+        # Mock the division operation to handle nested paths
         def mock_division(self, other):
+            if other == "predictions":
+                mock_pred_dir = Mock()
+                def mock_pred_division(self, x):
+                    return mock_pred_log
+                mock_pred_dir.__truediv__ = mock_pred_division
+                return mock_pred_dir
             return mock_pred_log
-
         mock_logs_dir.__truediv__ = mock_division
+
+        # Mock the open function to return a file-like object
+        mock_file = Mock()
+        mock_file.readlines.return_value = ['2024-01-01 10:00:00 - REQUEST: {"test": "data"}\n']
+        mock_open.return_value.__enter__.return_value = mock_file
 
         response = client.get("/logs?log_type=prediction&lines=5")
         assert response.status_code == 200

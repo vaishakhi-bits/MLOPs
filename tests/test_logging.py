@@ -2,6 +2,7 @@ import json
 import logging
 import shutil
 import tempfile
+import types
 from datetime import datetime
 from pathlib import Path
 from unittest.mock import MagicMock, Mock, patch
@@ -36,9 +37,15 @@ class TestLoggerSetup:
             # Mock the log file
             mock_log_file = Mock()
 
+            # Mock the division operation to handle nested paths
             def mock_division(self, other):
+                if other == "api":
+                    mock_api_dir = Mock()
+                    def mock_api_division(self, x):
+                        return mock_log_file
+                    mock_api_dir.__truediv__ = mock_api_division
+                    return mock_api_dir
                 return mock_log_file
-
             mock_logs_dir.__truediv__ = mock_division
 
             logger = setup_logger("test_logger")
@@ -59,9 +66,15 @@ class TestLoggerSetup:
             # Mock the log file
             mock_log_file = Mock()
 
+            # Mock the division operation to handle nested paths
             def mock_division(self, other):
+                if other == "api":
+                    mock_api_dir = Mock()
+                    def mock_api_division(self, x):
+                        return mock_log_file
+                    mock_api_dir.__truediv__ = mock_api_division
+                    return mock_api_dir
                 return mock_log_file
-
             mock_logs_dir.__truediv__ = mock_division
 
             logger = setup_logger("test_logger")
@@ -84,7 +97,6 @@ class TestLoggerSetup:
 
             def mock_division(self, other):
                 return mock_log_file
-
             mock_logs_dir.__truediv__ = mock_division
 
             # Call setup_logger twice
@@ -112,7 +124,6 @@ class TestPredictionLogger:
 
             def mock_division(self, other):
                 return mock_pred_log_file
-
             mock_logs_dir.__truediv__ = mock_division
 
             logger = setup_prediction_logger()
