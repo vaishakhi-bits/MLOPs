@@ -867,17 +867,3 @@ async def trigger_retraining(model_name: str):
             status_code=500,
             detail=f"Failed to trigger retraining: {str(e)}"
         )
-        
-    except Exception as e:
-        processing_time = time.time() - start_time
-        error_msg = f"Error making prediction: {str(e)}"
-        logger.error(f"Request {request_id}: {error_msg}")
-        
-        # Update Prometheus metrics for error
-        PREDICTION_COUNT.labels(model_name="iris", status="error").inc()
-        ERROR_COUNT.labels(error_type="prediction", endpoint="/predict_iris").inc()
-        
-        # Log error response
-        prediction_logger.log_response(request_id, "iris", None, processing_time, False, error_msg)
-        
-        raise HTTPException(status_code=500, detail=str(e))
