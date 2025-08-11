@@ -58,7 +58,7 @@ jobs:
         python run_tests.py --coverage
 
     - name: Upload coverage reports
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: quick-coverage-reports
         path: |
@@ -136,7 +136,7 @@ jobs:
         python run_tests.py --coverage --parallel
 
     - name: Upload test results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: test-results-${{ matrix.python-version }}
@@ -250,7 +250,7 @@ jobs:
         python run_tests.py --type training
 
     - name: Upload integration test results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: integration-test-results
@@ -294,7 +294,7 @@ jobs:
         python run_tests.py --type performance
 
     - name: Upload performance test results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: performance-test-results
