@@ -2,34 +2,29 @@
 Housing model training module for YugenAI project
 """
 
-import os
-import warnings
-import time
 import logging
-from pathlib import Path
+import os
+import time
+import warnings
 from datetime import datetime
-from typing import Dict, Any, Tuple, Optional
+from pathlib import Path
+from typing import Any, Dict, Optional, Tuple
 
-import pandas as pd
-import numpy as np
+import joblib
 import matplotlib.pyplot as plt
-import seaborn as sns
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import (
-    mean_squared_error,
-    r2_score,
-    mean_absolute_error,
-    explained_variance_score,
-)
-from sklearn.linear_model import LinearRegression
-from sklearn.tree import DecisionTreeRegressor
-from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
-from xgboost import XGBRegressor
-from lightgbm import LGBMRegressor
-
 import mlflow
 import mlflow.sklearn
-import joblib
+import numpy as np
+import pandas as pd
+import seaborn as sns
+from lightgbm import LGBMRegressor
+from sklearn.ensemble import GradientBoostingRegressor, RandomForestRegressor
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import (explained_variance_score, mean_absolute_error,
+                             mean_squared_error, r2_score)
+from sklearn.model_selection import train_test_split
+from sklearn.tree import DecisionTreeRegressor
+from xgboost import XGBRegressor
 
 from src.data.preprocessing import preprocess_housing_data, validate_dataframe
 from src.utils.logger import setup_logger

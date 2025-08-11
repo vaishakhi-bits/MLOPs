@@ -6,9 +6,10 @@ import argparse
 import logging
 from pathlib import Path
 
-from .train_iris import IrisModelTrainer
-from .train_housing import HousingModelTrainer
 from src.utils.logger import setup_logger
+
+from .train_housing import HousingModelTrainer
+from .train_iris import IrisModelTrainer
 
 logger = setup_logger("model_training")
 

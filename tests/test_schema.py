@@ -1,14 +1,9 @@
 import pytest
 from pydantic import ValidationError
-from src.api.schema import (
-    IrisFeatures,
-    HousingFeatures,
-    IrisPredictionResponse,
-    HousingPredictionResponse,
-    ModelStatus,
-    HealthCheck,
-    ErrorResponse,
-)
+
+from src.api.schema import (ErrorResponse, HealthCheck, HousingFeatures,
+                            HousingPredictionResponse, IrisFeatures,
+                            IrisPredictionResponse, ModelStatus)
 
 
 class TestIrisFeatures:

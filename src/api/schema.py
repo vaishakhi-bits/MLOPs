@@ -1,6 +1,7 @@
-from pydantic import BaseModel, Field, field_validator, model_validator
-from typing import Optional, Literal, List
+from typing import List, Literal, Optional
+
 import numpy as np
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 # ===== Housing Schemas =====
 

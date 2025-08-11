@@ -2,24 +2,26 @@
 Model retraining system with automatic triggers based on data changes.
 """
 
-import os
-import time
 import hashlib
 import json
 import logging
+import os
 import threading
+import time
+from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, List, Optional, Callable
-from dataclasses import dataclass, asdict
-from watchdog.observers import Observer
-from watchdog.events import FileSystemEventHandler
-import pandas as pd
-import mlflow
-from prometheus_client import Counter, Histogram, Gauge
+from typing import Callable, Dict, List, Optional
 
-from .train import train_iris_model, train_housing_model
+import mlflow
+import pandas as pd
+from prometheus_client import Counter, Gauge, Histogram
+from watchdog.events import FileSystemEventHandler
+from watchdog.observers import Observer
+
 from src.utils.logger import setup_logger
+
+from .train import train_housing_model, train_iris_model
 
 logger = setup_logger("model_retraining")
 

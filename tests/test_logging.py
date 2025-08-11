@@ -1,13 +1,15 @@
-import pytest
 import json
-import tempfile
-import shutil
 import logging
-from pathlib import Path
-from unittest.mock import patch, Mock, MagicMock
+import shutil
+import tempfile
 from datetime import datetime
+from pathlib import Path
+from unittest.mock import MagicMock, Mock, patch
 
-from src.utils.logger import setup_logger, setup_prediction_logger, PredictionLogger
+import pytest
+
+from src.utils.logger import (PredictionLogger, setup_logger,
+                              setup_prediction_logger)
 
 
 class TestLoggerSetup:
@@ -33,7 +35,11 @@ class TestLoggerSetup:
 
             # Mock the log file
             mock_log_file = Mock()
-            mock_logs_dir.__truediv__.return_value = mock_log_file
+
+            def mock_division(other):
+                return mock_log_file
+
+            mock_logs_dir.__truediv__ = mock_division
 
             logger = setup_logger("test_logger")
 
@@ -52,7 +58,11 @@ class TestLoggerSetup:
 
             # Mock the log file
             mock_log_file = Mock()
-            mock_logs_dir.__truediv__.return_value = mock_log_file
+
+            def mock_division(other):
+                return mock_log_file
+
+            mock_logs_dir.__truediv__ = mock_division
 
             logger = setup_logger("test_logger")
 
@@ -71,7 +81,11 @@ class TestLoggerSetup:
 
             # Mock the log file
             mock_log_file = Mock()
-            mock_logs_dir.__truediv__.return_value = mock_log_file
+
+            def mock_division(other):
+                return mock_log_file
+
+            mock_logs_dir.__truediv__ = mock_division
 
             # Call setup_logger twice
             logger1 = setup_logger("test_logger")
@@ -95,7 +109,11 @@ class TestPredictionLogger:
 
             # Mock the prediction log file
             mock_pred_log_file = Mock()
-            mock_logs_dir.__truediv__.return_value = mock_pred_log_file
+
+            def mock_division(other):
+                return mock_pred_log_file
+
+            mock_logs_dir.__truediv__ = mock_division
 
             logger = setup_prediction_logger()
 
@@ -283,6 +301,7 @@ class TestLoggingIntegration:
     def test_logging_in_api_request(self, tmp_path):
         """Test that logging is properly integrated in API requests"""
         from fastapi.testclient import TestClient
+
         from src.api.main import app
 
         client = TestClient(app)
@@ -323,6 +342,7 @@ class TestLoggingIntegration:
     def test_logging_in_api_error(self, tmp_path):
         """Test that logging is properly integrated in API error handling"""
         from fastapi.testclient import TestClient
+
         from src.api.main import app
 
         client = TestClient(app)

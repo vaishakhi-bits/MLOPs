@@ -1,16 +1,17 @@
-import pytest
-import pandas as pd
-import numpy as np
-from pathlib import Path
-from unittest.mock import patch, Mock, MagicMock
-import tempfile
 import shutil
+import tempfile
+from pathlib import Path
+from unittest.mock import MagicMock, Mock, patch
+
 import joblib
+import numpy as np
+import pandas as pd
+import pytest
 
 # Import training modules (if they exist)
 try:
-    from src.models.train_iris import train_iris_model
     from src.models.train_housing import train_housing_model
+    from src.models.train_iris import train_iris_model
 
     TRAINING_MODULES_AVAILABLE = True
 except ImportError:
@@ -268,9 +269,9 @@ class TestModelEvaluation:
 
     def test_iris_model_evaluation(self, sample_iris_data):
         """Test Iris model evaluation metrics"""
-        from sklearn.model_selection import train_test_split
         from sklearn.ensemble import RandomForestClassifier
         from sklearn.metrics import accuracy_score, classification_report
+        from sklearn.model_selection import train_test_split
 
         # Prepare data
         X = sample_iris_data[
@@ -304,12 +305,12 @@ class TestModelEvaluation:
 
     def test_housing_model_evaluation(self, sample_housing_data):
         """Test Housing model evaluation metrics"""
-        from sklearn.model_selection import train_test_split
+        from sklearn.compose import ColumnTransformer
         from sklearn.ensemble import RandomForestRegressor
         from sklearn.metrics import mean_squared_error, r2_score
-        from sklearn.preprocessing import StandardScaler, OneHotEncoder
-        from sklearn.compose import ColumnTransformer
+        from sklearn.model_selection import train_test_split
         from sklearn.pipeline import Pipeline
+        from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
         # Prepare data
         numeric_features = [
@@ -368,8 +369,8 @@ class TestModelEvaluation:
 
     def test_cross_validation(self, sample_iris_data):
         """Test cross-validation functionality"""
-        from sklearn.model_selection import cross_val_score
         from sklearn.ensemble import RandomForestClassifier
+        from sklearn.model_selection import cross_val_score
 
         # Prepare data
         X = sample_iris_data[
@@ -454,10 +455,10 @@ class TestTrainingPipeline:
 
     def test_end_to_end_iris_training(self, sample_iris_data, temp_test_dir):
         """Test end-to-end Iris training pipeline"""
-        from sklearn.model_selection import train_test_split
+        import joblib
         from sklearn.ensemble import RandomForestClassifier
         from sklearn.metrics import accuracy_score
-        import joblib
+        from sklearn.model_selection import train_test_split
 
         # Prepare data
         X = sample_iris_data[
@@ -500,13 +501,13 @@ class TestTrainingPipeline:
 
     def test_end_to_end_housing_training(self, sample_housing_data, temp_test_dir):
         """Test end-to-end Housing training pipeline"""
-        from sklearn.model_selection import train_test_split
+        import joblib
+        from sklearn.compose import ColumnTransformer
         from sklearn.ensemble import RandomForestRegressor
         from sklearn.metrics import mean_squared_error
-        from sklearn.preprocessing import StandardScaler, OneHotEncoder
-        from sklearn.compose import ColumnTransformer
+        from sklearn.model_selection import train_test_split
         from sklearn.pipeline import Pipeline
-        import joblib
+        from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
         # Prepare data
         numeric_features = [

@@ -2,11 +2,12 @@
 Data preprocessing utilities for YugenAI project
 """
 
-import pandas as pd
-import numpy as np
-from sklearn.preprocessing import StandardScaler, LabelEncoder
-from pathlib import Path
 import logging
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
+from sklearn.preprocessing import LabelEncoder, StandardScaler
 
 logger = logging.getLogger(__name__)
 

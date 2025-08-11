@@ -1,41 +1,29 @@
-from fastapi import FastAPI, HTTPException, Request, Response, status
-from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
-from fastapi.middleware.cors import CORSMiddleware
-from prometheus_client import (
-    make_asgi_app,
-    Counter,
-    Histogram,
-    Gauge,
-    Summary,
-    generate_latest,
-    CONTENT_TYPE_LATEST,
-    CollectorRegistry,
-)
-from src.api.schema import (
-    HousingFeatures,
-    HousingPredictionResponse,
-    IrisFeatures,
-    IrisPredictionResponse,
-    ErrorResponse,
-    HealthCheck,
-    ModelStatus,
-    RetrainingConfig,
-    RetrainingStatus,
-    RetrainingHistory,
-)
-import numpy as np
-import pandas as pd
-import mlflow.pyfunc
-from dotenv import load_dotenv
+import datetime
 import os
 import time
 import uuid
-import datetime
 from pathlib import Path
+
 import joblib
+import mlflow.pyfunc
+import numpy as np
+import pandas as pd
+from dotenv import load_dotenv
+from fastapi import FastAPI, HTTPException, Request, Response, status
+from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from prometheus_client import (CONTENT_TYPE_LATEST, CollectorRegistry, Counter,
+                               Gauge, Histogram, Summary, generate_latest,
+                               make_asgi_app)
 from sklearn.preprocessing import StandardScaler
-from src.utils.logger import setup_logger, prediction_logger
+
+from src.api.schema import (ErrorResponse, HealthCheck, HousingFeatures,
+                            HousingPredictionResponse, IrisFeatures,
+                            IrisPredictionResponse, ModelStatus,
+                            RetrainingConfig, RetrainingHistory,
+                            RetrainingStatus)
+from src.utils.logger import prediction_logger, setup_logger
 
 # Import centralized MLflow configuration
 try:
@@ -47,7 +35,8 @@ except ImportError:
 
 # Import retraining system
 try:
-    from src.models.retraining import ModelRetrainingManager, create_default_configs
+    from src.models.retraining import (ModelRetrainingManager,
+                                       create_default_configs)
 
     RETRAINING_AVAILABLE = True
     retraining_manager = None
@@ -342,8 +331,9 @@ feature_scaler = None  # Initialize feature_scaler to None
 # Try to load the model from the specified path
 try:
     import os
-    import joblib
     from pathlib import Path
+
+    import joblib
 
     # Define the model path relative to the project root
     project_root = Path(__file__).parent.parent.parent  # Goes up to yugenai directory

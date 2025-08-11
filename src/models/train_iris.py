@@ -2,29 +2,29 @@
 Iris model training module for YugenAI project
 """
 
-import os
-import warnings
-import time
 import logging
-from pathlib import Path
+import os
+import time
+import warnings
 from datetime import datetime
-from typing import Dict, Any, Tuple, Optional
+from pathlib import Path
+from typing import Any, Dict, Optional, Tuple
 
-import pandas as pd
-import numpy as np
+import joblib
 import matplotlib.pyplot as plt
-import seaborn as sns
-from sklearn.model_selection import train_test_split, cross_val_score
-from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
-from sklearn.linear_model import LogisticRegression
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
-from sklearn.svm import SVC
-from sklearn.neighbors import KNeighborsClassifier
-
 import mlflow
 import mlflow.sklearn
-import joblib
+import numpy as np
+import pandas as pd
+import seaborn as sns
+from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import (accuracy_score, classification_report,
+                             confusion_matrix)
+from sklearn.model_selection import cross_val_score, train_test_split
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.svm import SVC
+from sklearn.tree import DecisionTreeClassifier
 
 from src.data.preprocessing import preprocess_iris_data, validate_dataframe
 from src.utils.logger import setup_logger
