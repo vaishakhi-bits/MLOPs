@@ -27,6 +27,9 @@ dvc[gcs]>=2.9.3
 pytest>=6.2.5
 pytest-cov>=2.12.1
 
+# Code formatting
+black>=22.0.0
+
 # Utilities
 joblib>=1.1.0
 pyyaml>=5.4.1
