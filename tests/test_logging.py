@@ -9,8 +9,7 @@ from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
-from src.utils.logger import (PredictionLogger, setup_logger,
-                              setup_prediction_logger)
+from src.utils.logger import PredictionLogger, setup_logger, setup_prediction_logger
 
 
 class TestLoggerSetup:
@@ -28,14 +27,21 @@ class TestLoggerSetup:
                 if other == "api":
                     mock_api_dir = Mock()
                     mock_api_dir.mkdir = Mock()
+
                     def mock_api_division(self, x):
                         mock_log_file = Mock()
-                        mock_log_file.__str__ = lambda self: str(tmp_path / "mock_log_file.log")
-                        mock_log_file.__fspath__ = lambda self: str(tmp_path / "mock_log_file.log")
+                        mock_log_file.__str__ = lambda self: str(
+                            tmp_path / "mock_log_file.log"
+                        )
+                        mock_log_file.__fspath__ = lambda self: str(
+                            tmp_path / "mock_log_file.log"
+                        )
                         return mock_log_file
+
                     mock_api_dir.__truediv__ = mock_api_division
                     return mock_api_dir
                 return mock_logs_dir
+
             mock_logs_dir.__truediv__ = mock_division
 
             logger = setup_logger("test_logger")
@@ -56,13 +62,20 @@ class TestLoggerSetup:
             def mock_division(self, other):
                 if other == "api":
                     mock_api_dir = Mock()
+
                     def mock_api_division(self, x):
-                        mock_log_file.__str__ = lambda self: str(tmp_path / "mock_log_file.log")
-                        mock_log_file.__fspath__ = lambda self: str(tmp_path / "mock_log_file.log")
+                        mock_log_file.__str__ = lambda self: str(
+                            tmp_path / "mock_log_file.log"
+                        )
+                        mock_log_file.__fspath__ = lambda self: str(
+                            tmp_path / "mock_log_file.log"
+                        )
                         return mock_log_file
+
                     mock_api_dir.__truediv__ = mock_api_division
                     return mock_api_dir
                 return mock_log_file
+
             mock_logs_dir.__truediv__ = mock_division
 
             logger = setup_logger("test_logger")
@@ -87,20 +100,30 @@ class TestLoggerSetup:
             def mock_division(self, other):
                 if other == "api":
                     mock_api_dir = Mock()
+
                     def mock_api_division(self, x):
-                        mock_log_file.__str__ = lambda self: str(tmp_path / "mock_log_file.log")
-                        mock_log_file.__fspath__ = lambda self: str(tmp_path / "mock_log_file.log")
+                        mock_log_file.__str__ = lambda self: str(
+                            tmp_path / "mock_log_file.log"
+                        )
+                        mock_log_file.__fspath__ = lambda self: str(
+                            tmp_path / "mock_log_file.log"
+                        )
                         return mock_log_file
+
                     mock_api_dir.__truediv__ = mock_api_division
                     return mock_api_dir
                 return mock_log_file
+
             mock_logs_dir.__truediv__ = mock_division
 
             logger = setup_logger("test_logger")
 
             # Check that console handler was created
             console_handlers = [
-                h for h in logger.handlers if isinstance(h, logging.StreamHandler) and not isinstance(h, logging.FileHandler)
+                h
+                for h in logger.handlers
+                if isinstance(h, logging.StreamHandler)
+                and not isinstance(h, logging.FileHandler)
             ]
             assert len(console_handlers) == 1
 
@@ -118,13 +141,20 @@ class TestLoggerSetup:
             def mock_division(self, other):
                 if other == "api":
                     mock_api_dir = Mock()
+
                     def mock_api_division(self, x):
-                        mock_log_file.__str__ = lambda self: str(tmp_path / "mock_log_file.log")
-                        mock_log_file.__fspath__ = lambda self: str(tmp_path / "mock_log_file.log")
+                        mock_log_file.__str__ = lambda self: str(
+                            tmp_path / "mock_log_file.log"
+                        )
+                        mock_log_file.__fspath__ = lambda self: str(
+                            tmp_path / "mock_log_file.log"
+                        )
                         return mock_log_file
+
                     mock_api_dir.__truediv__ = mock_api_division
                     return mock_api_dir
                 return mock_log_file
+
             mock_logs_dir.__truediv__ = mock_division
 
             # Call setup_logger twice
@@ -154,11 +184,14 @@ class TestPredictionLogger:
             def mock_division(self, other):
                 if other == "predictions":
                     mock_pred_dir = Mock()
+
                     def mock_pred_division(self, x):
                         return mock_pred_log_file
+
                     mock_pred_dir.__truediv__ = mock_pred_division
                     return mock_pred_dir
                 return mock_pred_log_file
+
             mock_logs_dir.__truediv__ = mock_division
 
             logger = setup_prediction_logger()
@@ -377,7 +410,12 @@ class TestLoggingIntegration:
                 request_call = mock_pred_logger.log_request.call_args
                 assert request_call[0][0] == "iris"  # model_type
                 assert request_call[0][1] is not None  # request_id should not be None
-                assert request_call[0][2] == {"SepalLengthCm": 5.1, "SepalWidthCm": 3.5, "PetalLengthCm": 1.4, "PetalWidthCm": 0.2}  # features
+                assert request_call[0][2] == {
+                    "SepalLengthCm": 5.1,
+                    "SepalWidthCm": 3.5,
+                    "PetalLengthCm": 1.4,
+                    "PetalWidthCm": 0.2,
+                }  # features
 
                 # Check the response logging call
                 response_call = mock_pred_logger.log_response.call_args
@@ -437,6 +475,7 @@ class TestLogFileOperations:
 
         # Change to the temporary directory and patch Path to return the logs directory
         import os
+
         original_cwd = os.getcwd()
         os.chdir(tmp_path)
 
@@ -473,6 +512,7 @@ class TestLogFileOperations:
 
         # Change to the temporary directory and patch Path to return the logs directory
         import os
+
         original_cwd = os.getcwd()
         os.chdir(tmp_path)
 

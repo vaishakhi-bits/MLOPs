@@ -115,16 +115,21 @@ class TestLogsEndpoint:
         def mock_division(self, other):
             if other == "api":
                 mock_api_dir = Mock()
+
                 def mock_api_division(self, x):
                     return mock_api_log
+
                 mock_api_dir.__truediv__ = mock_api_division
                 return mock_api_dir
             return mock_api_log
+
         mock_logs_dir.__truediv__ = mock_division
 
         # Mock the open function to return a file-like object
         mock_file = Mock()
-        mock_file.readlines.return_value = ["2024-01-01 10:00:00 - api - INFO - Test log\n"]
+        mock_file.readlines.return_value = [
+            "2024-01-01 10:00:00 - api - INFO - Test log\n"
+        ]
         mock_open.return_value.__enter__.return_value = mock_file
 
         response = client.get("/logs?log_type=api&lines=5")
@@ -150,16 +155,21 @@ class TestLogsEndpoint:
         def mock_division(self, other):
             if other == "predictions":
                 mock_pred_dir = Mock()
+
                 def mock_pred_division(self, x):
                     return mock_pred_log
+
                 mock_pred_dir.__truediv__ = mock_pred_division
                 return mock_pred_dir
             return mock_pred_log
+
         mock_logs_dir.__truediv__ = mock_division
 
         # Mock the open function to return a file-like object
         mock_file = Mock()
-        mock_file.readlines.return_value = ['2024-01-01 10:00:00 - REQUEST: {"test": "data"}\n']
+        mock_file.readlines.return_value = [
+            '2024-01-01 10:00:00 - REQUEST: {"test": "data"}\n'
+        ]
         mock_open.return_value.__enter__.return_value = mock_file
 
         response = client.get("/logs?log_type=prediction&lines=5")
