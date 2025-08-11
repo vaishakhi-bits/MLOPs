@@ -1,0 +1,10 @@
+artifact_location: file:///D:/bits/MLOPs/mlruns/167032995587606359/models/m-32a1aaa52b2d483593f3d22ac6a365d9/artifacts
+creation_timestamp: 1754904399204
+experiment_id: '167032995587606359'
+last_updated_timestamp: 1754904402878
+model_id: m-32a1aaa52b2d483593f3d22ac6a365d9
+model_type: null
+name: lightgbm_model
+source_run_id: 61028c0bfcad4399b5cca2033e87cf44
+status: 2
+status_message: null

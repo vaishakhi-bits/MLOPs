@@ -1,0 +1,14 @@
+artifact_uri: file:///D:/bits/MLOPs/mlruns/167032995587606359/dbcd0b6ae7644ad5a1ffea72f9ec54f9/artifacts
+end_time: 1754904389363
+entry_point_name: ''
+experiment_id: '167032995587606359'
+lifecycle_stage: active
+run_id: dbcd0b6ae7644ad5a1ffea72f9ec54f9
+run_name: gradient_boosting_training
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1754904364673
+status: 3
+tags: []
+user_id: Yugensys

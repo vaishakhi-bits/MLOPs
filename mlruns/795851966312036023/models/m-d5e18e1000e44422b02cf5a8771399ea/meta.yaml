@@ -1,0 +1,10 @@
+artifact_location: file:///D:/bits/MLOPs/mlruns/795851966312036023/models/m-d5e18e1000e44422b02cf5a8771399ea/artifacts
+creation_timestamp: 1754904007397
+experiment_id: '795851966312036023'
+last_updated_timestamp: 1754904010933
+model_id: m-d5e18e1000e44422b02cf5a8771399ea
+model_type: null
+name: model
+source_run_id: 56af55b368be493aa3c7228bb8f4c352
+status: 2
+status_message: null

@@ -1,0 +1,14 @@
+artifact_uri: file:///D:/bits/MLOPs/mlruns/795851966312036023/c052edc38e3e4405a345554d1942cac2/artifacts
+end_time: 1754903921154
+entry_point_name: ''
+experiment_id: '795851966312036023'
+lifecycle_stage: active
+run_id: c052edc38e3e4405a345554d1942cac2
+run_name: decision_tree_training
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1754903885300
+status: 3
+tags: []
+user_id: Yugensys

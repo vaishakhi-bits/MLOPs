@@ -1,0 +1,14 @@
+artifact_uri: file:///D:/bits/MLOPs/mlruns/795851966312036023/0e7175d06cb242548f5169b7732fafbf/artifacts
+end_time: 1754904072536
+entry_point_name: ''
+experiment_id: '795851966312036023'
+lifecycle_stage: active
+run_id: 0e7175d06cb242548f5169b7732fafbf
+run_name: knn_training
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1754904033181
+status: 3
+tags: []
+user_id: Yugensys

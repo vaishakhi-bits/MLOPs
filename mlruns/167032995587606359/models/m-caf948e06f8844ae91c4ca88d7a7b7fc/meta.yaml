@@ -1,0 +1,10 @@
+artifact_location: file:///D:/bits/MLOPs/mlruns/167032995587606359/models/m-caf948e06f8844ae91c4ca88d7a7b7fc/artifacts
+creation_timestamp: 1754904358694
+experiment_id: '167032995587606359'
+last_updated_timestamp: 1754904362193
+model_id: m-caf948e06f8844ae91c4ca88d7a7b7fc
+model_type: null
+name: random_forest_model
+source_run_id: fb838f428c9d44989887a236586a2db5
+status: 2
+status_message: null

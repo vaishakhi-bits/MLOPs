@@ -1,0 +1,14 @@
+artifact_uri: file:///D:/bits/MLOPs/mlruns/167032995587606359/cee0cdb4e81f45e3a2c3c2270d079ffc/artifacts
+end_time: 1754904396133
+entry_point_name: ''
+experiment_id: '167032995587606359'
+lifecycle_stage: active
+run_id: cee0cdb4e81f45e3a2c3c2270d079ffc
+run_name: xgboost_training
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1754904389382
+status: 3
+tags: []
+user_id: Yugensys

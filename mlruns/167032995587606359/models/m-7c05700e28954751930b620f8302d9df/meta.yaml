@@ -1,0 +1,10 @@
+artifact_location: file:///D:/bits/MLOPs/mlruns/167032995587606359/models/m-7c05700e28954751930b620f8302d9df/artifacts
+creation_timestamp: 1754904313888
+experiment_id: '167032995587606359'
+last_updated_timestamp: 1754904317919
+model_id: m-7c05700e28954751930b620f8302d9df
+model_type: null
+name: linear_regression_model
+source_run_id: 0e841775ea9b4161ba3b8f93d0752b6a
+status: 2
+status_message: null

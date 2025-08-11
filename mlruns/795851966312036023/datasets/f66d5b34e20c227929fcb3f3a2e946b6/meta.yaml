@@ -1,0 +1,10 @@
+digest: 0febf070
+name: dataset
+profile: '{"num_rows": 24, "num_elements": 120}'
+schema: '{"mlflow_colspec": [{"type": "long", "name": "Id", "required": true}, {"type":
+  "double", "name": "SepalLengthCm", "required": true}, {"type": "double", "name":
+  "SepalWidthCm", "required": true}, {"type": "double", "name": "PetalLengthCm", "required":
+  true}, {"type": "double", "name": "PetalWidthCm", "required": true}]}'
+source: '{"tags": {"mlflow.user": "Yugensys", "mlflow.source.name": "D:\\bits\\MLOPs\\src\\models\\train.py",
+  "mlflow.source.type": "LOCAL", "mlflow.source.git.commit": "93ca6f42023372398fb6610e462439bb79cad773"}}'
+source_type: code

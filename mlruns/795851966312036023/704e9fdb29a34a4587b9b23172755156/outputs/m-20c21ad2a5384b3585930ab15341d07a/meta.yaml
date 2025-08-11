@@ -1,0 +1,6 @@
+destination_id: m-20c21ad2a5384b3585930ab15341d07a
+destination_type: MODEL_OUTPUT
+source_id: m-20c21ad2a5384b3585930ab15341d07a
+source_type: RUN_OUTPUT
+step: 0
+tags: {}

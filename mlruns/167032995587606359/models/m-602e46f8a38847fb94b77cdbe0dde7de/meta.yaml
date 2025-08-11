@@ -1,0 +1,10 @@
+artifact_location: file:///D:/bits/MLOPs/mlruns/167032995587606359/models/m-602e46f8a38847fb94b77cdbe0dde7de/artifacts
+creation_timestamp: 1754904383630
+experiment_id: '167032995587606359'
+last_updated_timestamp: 1754904387134
+model_id: m-602e46f8a38847fb94b77cdbe0dde7de
+model_type: null
+name: gradient_boosting_model
+source_run_id: dbcd0b6ae7644ad5a1ffea72f9ec54f9
+status: 2
+status_message: null

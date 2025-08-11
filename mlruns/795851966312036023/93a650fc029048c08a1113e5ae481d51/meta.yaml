@@ -1,0 +1,14 @@
+artifact_uri: file:///D:/bits/MLOPs/mlruns/795851966312036023/93a650fc029048c08a1113e5ae481d51/artifacts
+end_time: 1754903885277
+entry_point_name: ''
+experiment_id: '795851966312036023'
+lifecycle_stage: active
+run_id: 93a650fc029048c08a1113e5ae481d51
+run_name: logistic_regression_training
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1754903831847
+status: 3
+tags: []
+user_id: Yugensys

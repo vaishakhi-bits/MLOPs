@@ -1,0 +1,14 @@
+artifact_uri: file:///D:/bits/MLOPs/mlruns/795851966312036023/704e9fdb29a34a4587b9b23172755156/artifacts
+end_time: 1754903959331
+entry_point_name: ''
+experiment_id: '795851966312036023'
+lifecycle_stage: active
+run_id: 704e9fdb29a34a4587b9b23172755156
+run_name: random_forest_training
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1754903921174
+status: 3
+tags: []
+user_id: Yugensys

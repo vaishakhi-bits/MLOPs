@@ -1,0 +1,14 @@
+artifact_uri: file:///D:/bits/MLOPs/mlruns/795851966312036023/56af55b368be493aa3c7228bb8f4c352/artifacts
+end_time: 1754904033160
+entry_point_name: ''
+experiment_id: '795851966312036023'
+lifecycle_stage: active
+run_id: 56af55b368be493aa3c7228bb8f4c352
+run_name: svm_training
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1754903998185
+status: 3
+tags: []
+user_id: Yugensys

@@ -1,0 +1,14 @@
+artifact_uri: file:///D:/bits/MLOPs/mlruns/167032995587606359/0e841775ea9b4161ba3b8f93d0752b6a/artifacts
+end_time: 1754904319320
+entry_point_name: ''
+experiment_id: '167032995587606359'
+lifecycle_stage: active
+run_id: 0e841775ea9b4161ba3b8f93d0752b6a
+run_name: linear_regression_training
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1754904304465
+status: 3
+tags: []
+user_id: Yugensys

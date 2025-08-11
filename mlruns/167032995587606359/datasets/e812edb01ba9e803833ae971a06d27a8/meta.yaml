@@ -1,0 +1,16 @@
+digest: c3755568
+name: dataset
+profile: '{"num_rows": 4087, "num_elements": 49044}'
+schema: '{"mlflow_colspec": [{"type": "double", "name": "longitude", "required": true},
+  {"type": "double", "name": "latitude", "required": true}, {"type": "double", "name":
+  "housing_median_age", "required": true}, {"type": "double", "name": "total_rooms",
+  "required": true}, {"type": "double", "name": "total_bedrooms", "required": true},
+  {"type": "double", "name": "population", "required": true}, {"type": "double", "name":
+  "households", "required": true}, {"type": "double", "name": "median_income", "required":
+  true}, {"type": "boolean", "name": "ocean_proximity_INLAND", "required": true},
+  {"type": "boolean", "name": "ocean_proximity_ISLAND", "required": true}, {"type":
+  "boolean", "name": "ocean_proximity_NEAR BAY", "required": true}, {"type": "boolean",
+  "name": "ocean_proximity_NEAR OCEAN", "required": true}]}'
+source: '{"tags": {"mlflow.user": "Yugensys", "mlflow.source.name": "D:\\bits\\MLOPs\\src\\models\\train.py",
+  "mlflow.source.type": "LOCAL", "mlflow.source.git.commit": "93ca6f42023372398fb6610e462439bb79cad773"}}'
+source_type: code
