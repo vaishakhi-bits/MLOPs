@@ -307,3 +307,22 @@ class ErrorResponse(BaseModel):
     detail: Optional[str] = Field(None, description="Detailed error information")
     request_id: Optional[str] = Field(None, description="Request ID for tracking")
     timestamp: str = Field(..., description="Error timestamp")
+
+# ===== Retraining Schemas =====
+
+class RetrainingConfig(BaseModel):
+    model_name: str = Field(..., description="Name of the model")
+    data_path: str = Field(..., description="Path to the data file")
+    check_interval: int = Field(300, description="Check interval in seconds")
+    min_data_size: int = Field(100, description="Minimum data size required")
+    max_model_age_hours: int = Field(24, description="Maximum model age in hours")
+    performance_threshold: float = Field(0.05, description="Performance degradation threshold")
+    enable_auto_retraining: bool = Field(True, description="Enable automatic retraining")
+
+class RetrainingStatus(BaseModel):
+    is_running: bool = Field(..., description="Whether retraining monitoring is running")
+    models: dict = Field(..., description="Status of each model")
+
+class RetrainingHistory(BaseModel):
+    history: list = Field(..., description="List of retraining events")
+    total: int = Field(..., description="Total number of events")

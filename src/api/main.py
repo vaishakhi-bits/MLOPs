@@ -13,7 +13,10 @@ from src.api.schema import (
     IrisPredictionResponse,
     ErrorResponse,
     HealthCheck,
-    ModelStatus
+    ModelStatus,
+    RetrainingConfig,
+    RetrainingStatus,
+    RetrainingHistory
 )
 import numpy as np
 import pandas as pd
@@ -34,6 +37,15 @@ try:
     MLFLOW_CONFIG_AVAILABLE = True
 except ImportError:
     MLFLOW_CONFIG_AVAILABLE = False
+
+# Import retraining system
+try:
+    from src.models.retraining import ModelRetrainingManager, create_default_configs
+    RETRAINING_AVAILABLE = True
+    retraining_manager = None
+except ImportError:
+    RETRAINING_AVAILABLE = False
+    retraining_manager = None
  
 # Load environment variables from .env file
 load_dotenv()
@@ -672,6 +684,188 @@ def predict_iris(features: IrisFeatures, request: Request):
             predicted_class=predicted_class,
             confidence_score=confidence_score,
             class_probabilities=class_probabilities
+        )
+
+# ===== Retraining Endpoints =====
+
+@app.post("/retraining/start")
+async def start_retraining_system():
+    """Start the model retraining monitoring system"""
+    global retraining_manager
+    
+    if not RETRAINING_AVAILABLE:
+        raise HTTPException(
+            status_code=503, 
+            detail="Retraining system not available"
+        )
+    
+    if retraining_manager and retraining_manager.is_running:
+        raise HTTPException(
+            status_code=400, 
+            detail="Retraining system is already running"
+        )
+    
+    try:
+        configs = create_default_configs()
+        retraining_manager = ModelRetrainingManager(configs)
+        retraining_manager.start_monitoring()
+        
+        logger.info("Retraining system started via API")
+        
+        return {
+            "status": "success",
+            "message": "Retraining system started successfully",
+            "models": list(configs.keys())
+        }
+    
+    except Exception as e:
+        logger.error(f"Failed to start retraining system: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to start retraining system: {str(e)}"
+        )
+
+@app.post("/retraining/stop")
+async def stop_retraining_system():
+    """Stop the model retraining monitoring system"""
+    global retraining_manager
+    
+    if not RETRAINING_AVAILABLE:
+        raise HTTPException(
+            status_code=503, 
+            detail="Retraining system not available"
+        )
+    
+    if not retraining_manager or not retraining_manager.is_running:
+        raise HTTPException(
+            status_code=400, 
+            detail="Retraining system is not running"
+        )
+    
+    try:
+        retraining_manager.stop_monitoring()
+        logger.info("Retraining system stopped via API")
+        
+        return {
+            "status": "success",
+            "message": "Retraining system stopped successfully"
+        }
+    
+    except Exception as e:
+        logger.error(f"Failed to stop retraining system: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to stop retraining system: {str(e)}"
+        )
+
+@app.get("/retraining/status")
+async def get_retraining_status():
+    """Get the current status of the retraining system"""
+    global retraining_manager
+    
+    if not RETRAINING_AVAILABLE:
+        raise HTTPException(
+            status_code=503, 
+            detail="Retraining system not available"
+        )
+    
+    try:
+        if retraining_manager:
+            status = retraining_manager.get_retraining_status()
+        else:
+            configs = create_default_configs()
+            status = {
+                "is_running": False,
+                "models": {}
+            }
+            for name, config in configs.items():
+                status["models"][name] = {
+                    "enabled": config.enable_auto_retraining,
+                    "data_path": config.data_path,
+                    "check_interval": config.check_interval,
+                    "min_data_size": config.min_data_size,
+                    "max_model_age_hours": config.max_model_age_hours,
+                    "performance_threshold": config.performance_threshold,
+                    "is_retraining": False,
+                    "model_age": None,
+                    "data_sufficient": False
+                }
+        
+        return status
+    
+    except Exception as e:
+        logger.error(f"Failed to get retraining status: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to get retraining status: {str(e)}"
+        )
+
+@app.get("/retraining/history")
+async def get_retraining_history(model_name: str = None, limit: int = 20):
+    """Get retraining history"""
+    global retraining_manager
+    
+    if not RETRAINING_AVAILABLE:
+        raise HTTPException(
+            status_code=503, 
+            detail="Retraining system not available"
+        )
+    
+    try:
+        if retraining_manager:
+            history = retraining_manager.get_retraining_history(model_name, limit)
+        else:
+            history = []
+        
+        return {
+            "history": history,
+            "total": len(history)
+        }
+    
+    except Exception as e:
+        logger.error(f"Failed to get retraining history: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to get retraining history: {str(e)}"
+        )
+
+@app.post("/retraining/trigger/{model_name}")
+async def trigger_retraining(model_name: str):
+    """Manually trigger retraining for a specific model"""
+    global retraining_manager
+    
+    if not RETRAINING_AVAILABLE:
+        raise HTTPException(
+            status_code=503, 
+            detail="Retraining system not available"
+        )
+    
+    if not retraining_manager:
+        raise HTTPException(
+            status_code=400, 
+            detail="Retraining system is not running"
+        )
+    
+    try:
+        retraining_manager.trigger_retraining(
+            model_name,
+            "manual",
+            "Manual trigger via API"
+        )
+        
+        logger.info(f"Manual retraining triggered for {model_name}")
+        
+        return {
+            "status": "success",
+            "message": f"Retraining triggered for {model_name}",
+            "model": model_name
+        }
+    
+    except Exception as e:
+        logger.error(f"Failed to trigger retraining for {model_name}: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to trigger retraining: {str(e)}"
         )
         
     except Exception as e:

@@ -31,3 +31,4 @@ pytest-cov>=2.12.1
 joblib>=1.1.0
 pyyaml>=5.4.1
 prometheus-client>=0.14.1
+watchdog>=3.0.0
