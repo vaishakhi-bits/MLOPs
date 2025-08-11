@@ -1,6 +1,6 @@
 [core]
-    remote = default
+    remote = myremote
 ['remote "default"']
-    url = ./dvc-storage
-['remote "gcs"']
+    url = dvc-storage
+['remote "myremote"']
     url = gs://rapid_care/mlops-dvc

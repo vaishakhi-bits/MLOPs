@@ -44,12 +44,9 @@ dist/
 mlruns/
 
 # Large model files (tracked separately)
-*.pkl
 *.joblib
 *.h5
 *.hdf5
 *.onnx
 *.pb
 
-# Artifacts directory (tracked separately)
-artifacts/
