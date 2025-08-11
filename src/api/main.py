@@ -2,7 +2,10 @@ from fastapi import FastAPI, HTTPException, Request, Response, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
-from prometheus_client import make_asgi_app, Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
+from prometheus_client import (
+    make_asgi_app, Counter, Histogram, Gauge, Summary, 
+    generate_latest, CONTENT_TYPE_LATEST, CollectorRegistry
+)
 from src.api.schema import (
     HousingFeatures,
     HousingPredictionResponse,
@@ -42,8 +45,10 @@ logger = setup_logger("api")
 MLFLOW_TRACKING_URI = os.getenv("MLFLOW_TRACKING_URI")
 # IRIS_RUN_ID = os.getenv("IRIS_RUN_ID")
 HOUSING_RUN_ID = os.getenv("HOUSING_RUN_ID")  # This may be None for now
- 
-# Prometheus metrics
+
+# ===== Prometheus Metrics =====
+
+# HTTP Request Metrics
 REQUEST_COUNT = Counter(
     'http_requests_total',
     'Total HTTP Requests',
@@ -54,6 +59,77 @@ REQUEST_LATENCY = Histogram(
     'http_request_duration_seconds',
     'HTTP Request Latency (seconds)',
     ['method', 'endpoint']
+)
+
+# Model-specific Metrics
+PREDICTION_COUNT = Counter(
+    'ml_predictions_total',
+    'Total ML Predictions',
+    ['model_name', 'status']
+)
+
+PREDICTION_LATENCY = Histogram(
+    'ml_prediction_duration_seconds',
+    'ML Prediction Latency (seconds)',
+    ['model_name']
+)
+
+PREDICTION_CONFIDENCE = Histogram(
+    'ml_prediction_confidence',
+    'ML Prediction Confidence Scores',
+    ['model_name']
+)
+
+# Validation Metrics
+VALIDATION_ERROR_COUNT = Counter(
+    'validation_errors_total',
+    'Total Validation Errors',
+    ['model_name', 'error_type']
+)
+
+# Model Health Metrics
+MODEL_LOAD_STATUS = Gauge(
+    'model_load_status',
+    'Model Load Status (1=loaded, 0=not_loaded)',
+    ['model_name']
+)
+
+MODEL_LAST_UPDATE = Gauge(
+    'model_last_update_timestamp',
+    'Last Model Update Timestamp',
+    ['model_name']
+)
+
+# System Metrics
+ACTIVE_REQUESTS = Gauge(
+    'active_requests',
+    'Number of Active Requests',
+    ['endpoint']
+)
+
+MEMORY_USAGE = Gauge(
+    'memory_usage_bytes',
+    'Memory Usage in Bytes'
+)
+
+# Business Metrics
+HOUSING_PRICE_PREDICTIONS = Summary(
+    'housing_price_predictions',
+    'Housing Price Predictions Statistics',
+    ['status']
+)
+
+IRIS_CLASS_PREDICTIONS = Counter(
+    'iris_class_predictions_total',
+    'Iris Class Predictions',
+    ['predicted_class']
+)
+
+# Error Metrics
+ERROR_COUNT = Counter(
+    'errors_total',
+    'Total Errors',
+    ['error_type', 'endpoint']
 )
 
 # Create a separate metrics app for Prometheus
@@ -152,20 +228,43 @@ async def track_metrics(request: Request, call_next):
     if endpoint == "/metrics":
         return await call_next(request)
     
+    # Track active requests
+    ACTIVE_REQUESTS.labels(endpoint=endpoint).inc()
+    
     # Record start time for latency calculation
     start_time = time.time()
     
-    # Process the request
-    response = await call_next(request)
-    
-    # Calculate request duration
-    request_duration = time.time() - start_time
-    
-    # Record metrics
-    REQUEST_COUNT.labels(method=method, endpoint=endpoint, status_code=response.status_code).inc()
-    REQUEST_LATENCY.labels(method=method, endpoint=endpoint).observe(request_duration)
-    
-    return response
+    try:
+        # Process the request
+        response = await call_next(request)
+        
+        # Calculate request duration
+        request_duration = time.time() - start_time
+        
+        # Record metrics
+        REQUEST_COUNT.labels(method=method, endpoint=endpoint, status_code=response.status_code).inc()
+        REQUEST_LATENCY.labels(method=method, endpoint=endpoint).observe(request_duration)
+        
+        # Track validation errors
+        if response.status_code == 422:
+            VALIDATION_ERROR_COUNT.labels(model_name="unknown", error_type="validation").inc()
+            ERROR_COUNT.labels(error_type="validation", endpoint=endpoint).inc()
+        
+        return response
+        
+    except Exception as e:
+        # Calculate request duration
+        request_duration = time.time() - start_time
+        
+        # Record error metrics
+        ERROR_COUNT.labels(error_type="exception", endpoint=endpoint).inc()
+        REQUEST_COUNT.labels(method=method, endpoint=endpoint, status_code=500).inc()
+        REQUEST_LATENCY.labels(method=method, endpoint=endpoint).observe(request_duration)
+        
+        raise
+    finally:
+        # Decrease active requests
+        ACTIVE_REQUESTS.labels(endpoint=endpoint).dec()
  
 # Set MLflow tracking URI from env
 # mlflow.set_tracking_uri(MLFLOW_TRACKING_URI) # This line is now handled by mlflow_config or direct setup
@@ -194,12 +293,17 @@ try:
         logger.info(f"Model type: {type(iris_model)}")
         prediction_logger.log_model_status("iris", "loaded", f"Model type: {type(iris_model)}")
         
+        # Update Prometheus metrics
+        MODEL_LOAD_STATUS.labels(model_name="iris").set(1)
+        MODEL_LAST_UPDATE.labels(model_name="iris").set(time.time())
+        
         # Verify the model has the predict method
         if not hasattr(iris_model, 'predict'):
             error_msg = "ERROR: Loaded model does not have predict() method"
             logger.error(error_msg)
             prediction_logger.log_model_status("iris", "error", error_msg)
             iris_model = None
+            MODEL_LOAD_STATUS.labels(model_name="iris").set(0)
         else:
             prediction_logger.log_model_status("iris", "ready", "Model loaded and ready for predictions")
 except Exception as e:
@@ -254,11 +358,16 @@ try:
     
     logger.info(f"Model type: {type(housing_model)}")
     
+    # Update Prometheus metrics
+    MODEL_LOAD_STATUS.labels(model_name="housing").set(1)
+    MODEL_LAST_UPDATE.labels(model_name="housing").set(time.time())
+    
     # Verify the model has the predict method
     if not hasattr(housing_model, 'predict'):
         error_msg = "Loaded model does not have predict() method"
         logger.error(error_msg)
         prediction_logger.log_model_status("housing", "error", error_msg)
+        MODEL_LOAD_STATUS.labels(model_name="housing").set(0)
         raise AttributeError("Loaded model does not have predict() method")
     
     prediction_logger.log_model_status("housing", "ready", "Model loaded and ready for predictions")
@@ -461,6 +570,12 @@ def predict_housing(features: HousingFeatures, request: Request):
         # Calculate confidence score (simplified - in practice, this would come from the model)
         confidence_score = 0.85  # Placeholder - could be calculated from model uncertainty
         
+        # Update Prometheus metrics
+        PREDICTION_COUNT.labels(model_name="housing", status="success").inc()
+        PREDICTION_LATENCY.labels(model_name="housing").observe(processing_time)
+        PREDICTION_CONFIDENCE.labels(model_name="housing").observe(confidence_score)
+        HOUSING_PRICE_PREDICTIONS.labels(status="success").observe(float(prediction))
+        
         # Log successful response
         prediction_logger.log_response(request_id, "housing", float(prediction), processing_time, True)
         logger.info(f"Request {request_id}: Housing prediction completed successfully in {processing_time:.4f}s")
@@ -476,6 +591,10 @@ def predict_housing(features: HousingFeatures, request: Request):
         logger.error(f"Request {request_id}: {error_msg}")
         import traceback
         traceback.print_exc()
+        
+        # Update Prometheus metrics for error
+        PREDICTION_COUNT.labels(model_name="housing", status="error").inc()
+        ERROR_COUNT.labels(error_type="prediction", endpoint="/predict_housing").inc()
         
         # Log error response
         prediction_logger.log_response(request_id, "housing", None, processing_time, False, error_msg)
@@ -539,6 +658,12 @@ def predict_iris(features: IrisFeatures, request: Request):
         # Calculate processing time
         processing_time = time.time() - start_time
         
+        # Update Prometheus metrics
+        PREDICTION_COUNT.labels(model_name="iris", status="success").inc()
+        PREDICTION_LATENCY.labels(model_name="iris").observe(processing_time)
+        PREDICTION_CONFIDENCE.labels(model_name="iris").observe(confidence_score)
+        IRIS_CLASS_PREDICTIONS.labels(predicted_class=predicted_class).inc()
+        
         # Log successful response
         prediction_logger.log_response(request_id, "iris", predicted_class, processing_time, True)
         logger.info(f"Request {request_id}: Iris prediction completed successfully in {processing_time:.4f}s")
@@ -553,6 +678,10 @@ def predict_iris(features: IrisFeatures, request: Request):
         processing_time = time.time() - start_time
         error_msg = f"Error making prediction: {str(e)}"
         logger.error(f"Request {request_id}: {error_msg}")
+        
+        # Update Prometheus metrics for error
+        PREDICTION_COUNT.labels(model_name="iris", status="error").inc()
+        ERROR_COUNT.labels(error_type="prediction", endpoint="/predict_iris").inc()
         
         # Log error response
         prediction_logger.log_response(request_id, "iris", None, processing_time, False, error_msg)
