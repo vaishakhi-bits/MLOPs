@@ -28,7 +28,7 @@ jobs:
         python-version: ${{ env.PYTHON_VERSION }}
 
     - name: Cache pip dependencies
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: ${{ env.PIP_CACHE_DIR }}
         key: ${{ runner.os }}-pip-${{ env.PYTHON_VERSION }}-${{ hashFiles('**/requirements*.txt') }}
@@ -67,7 +67,7 @@ jobs:
         retention-days: 7
 
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v4
       with:
         file: ./coverage.xml
         flags: quick-tests
@@ -114,7 +114,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
 
     - name: Cache pip dependencies
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: ${{ env.PIP_CACHE_DIR }}
         key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('**/requirements*.txt') }}
@@ -129,11 +129,11 @@ jobs:
 
     - name: Run all tests
       run: |
-        python run_tests.py --all
+        python run_tests.py --type all
 
     - name: Run with coverage
       run: |
-        python run_tests.py --coverage --parallel
+        python run_tests.py --coverage
 
     - name: Upload test results
       uses: actions/upload-artifact@v4
@@ -148,7 +148,7 @@ jobs:
         retention-days: 30
 
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v4
       with:
         file: ./coverage.xml
         flags: comprehensive-tests
@@ -173,7 +173,7 @@ jobs:
         python-version: ${{ env.PYTHON_VERSION }}
 
     - name: Cache pip dependencies
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: ${{ env.PIP_CACHE_DIR }}
         key: ${{ runner.os }}-pip-${{ env.PYTHON_VERSION }}-${{ hashFiles('**/requirements*.txt') }}
@@ -228,7 +228,7 @@ jobs:
         python-version: ${{ env.PYTHON_VERSION }}
 
     - name: Cache pip dependencies
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: ${{ env.PIP_CACHE_DIR }}
         key: ${{ runner.os }}-pip-${{ env.PYTHON_VERSION }}-${{ hashFiles('**/requirements*.txt') }}
@@ -276,7 +276,7 @@ jobs:
         python-version: ${{ env.PYTHON_VERSION }}
 
     - name: Cache pip dependencies
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: ${{ env.PIP_CACHE_DIR }}
         key: ${{ runner.os }}-pip-${{ env.PYTHON_VERSION }}-${{ hashFiles('**/requirements*.txt') }}
@@ -291,7 +291,7 @@ jobs:
 
     - name: Run performance tests
       run: |
-        python run_tests.py --type performance
+        python run_tests.py --type logging
 
     - name: Upload performance test results
       uses: actions/upload-artifact@v4
