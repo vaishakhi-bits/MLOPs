@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field, field_validator, model_validator
-from typing import Optional, Literal
+from typing import Optional, Literal, List
 import numpy as np
 
 # ===== Housing Schemas =====
@@ -315,7 +315,7 @@ class ModelStatus(BaseModel):
 
 class HealthCheck(BaseModel):
     status: str = Field(..., description="Overall health status")
-    models: list[ModelStatus] = Field(..., description="Status of all models")
+    models: List[ModelStatus] = Field(..., description="Status of all models")
     timestamp: str = Field(..., description="Health check timestamp")
     version: str = Field(..., description="API version")
 
