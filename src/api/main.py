@@ -13,16 +13,30 @@ from fastapi import FastAPI, HTTPException, Request, Response, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from prometheus_client import (CONTENT_TYPE_LATEST, CollectorRegistry, Counter,
-                               Gauge, Histogram, Summary, generate_latest,
-                               make_asgi_app)
+from prometheus_client import (
+    CONTENT_TYPE_LATEST,
+    CollectorRegistry,
+    Counter,
+    Gauge,
+    Histogram,
+    Summary,
+    generate_latest,
+    make_asgi_app,
+)
 from sklearn.preprocessing import StandardScaler
 
-from src.api.schema import (ErrorResponse, HealthCheck, HousingFeatures,
-                            HousingPredictionResponse, IrisFeatures,
-                            IrisPredictionResponse, ModelStatus,
-                            RetrainingConfig, RetrainingHistory,
-                            RetrainingStatus)
+from src.api.schema import (
+    ErrorResponse,
+    HealthCheck,
+    HousingFeatures,
+    HousingPredictionResponse,
+    IrisFeatures,
+    IrisPredictionResponse,
+    ModelStatus,
+    RetrainingConfig,
+    RetrainingHistory,
+    RetrainingStatus,
+)
 from src.utils.logger import prediction_logger, setup_logger
 
 # Import centralized MLflow configuration
@@ -35,8 +49,7 @@ except ImportError:
 
 # Import retraining system
 try:
-    from src.models.retraining import (ModelRetrainingManager,
-                                       create_default_configs)
+    from src.models.retraining import ModelRetrainingManager, create_default_configs
 
     RETRAINING_AVAILABLE = True
     retraining_manager = None

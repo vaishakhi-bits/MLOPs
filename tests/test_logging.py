@@ -9,8 +9,7 @@ from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
-from src.utils.logger import (PredictionLogger, setup_logger,
-                              setup_prediction_logger)
+from src.utils.logger import PredictionLogger, setup_logger, setup_prediction_logger
 
 
 class TestLoggerSetup:
